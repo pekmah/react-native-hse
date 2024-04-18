@@ -26,6 +26,7 @@ const DashboardScreen = () => {
     try {
       // Fetch api token
       const token = await AsyncStorage.getItem("token");
+      console.log(token);
 
       // Fetch dashboard stats
       const response = await ApiManager.get("/dashboard-stats", {
@@ -33,7 +34,6 @@ const DashboardScreen = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      console.log(response.data);
       // Set dashboard stats
     //   {
     //     "attendance": 0,

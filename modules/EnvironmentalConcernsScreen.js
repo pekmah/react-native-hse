@@ -1,81 +1,122 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Button,
+  Dimensions,
+  StyleSheet,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const EnvironmentalConcernsScreen = () => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const [type, setType] = useState('');
-    const [comment, setComment] = useState('');
-    const [correctiveAction, setCorrectiveAction] = useState('');
-    const [status, setStatus] = useState('Pending');
-    const [projectManager, setProjectManager] = useState('');
-    const [auditor, setAuditor] = useState('');
+  const [concerns, setConcerns] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-    const handleSubmit = () => {
-        // Perform submission logic here
-        // Include your form submission code
-        console.log('Form submitted');
-        setModalVisible(false); // Close modal after submission
-    };
+  useEffect(() => {
+    // Fetch concerns when component mounts
+    fetchConcerns();
+  }, []);
 
-    return (
-        <View>
-            <Text>Environmental Concern Manager</Text>
+  const fetchConcerns = async () => {
+    try {
+      // Fetch concerns from API
+      // Replace this with your actual API call
+      const response = await fetch('your_api_endpoint');
+      const data = await response.json();
+      setConcerns(data.concerns);
+    } catch (error) {
+      console.error('Error fetching concerns:', error);
+    }
+  };
 
-            {/* Add Button */}
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
-                <TouchableOpacity onPress={() => setModalVisible(true)} style={{ marginRight: 10 }}>
-                    <Text>Add Free Form</Text>
-                </TouchableOpacity>
-            </View>
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {/* Render concerns */}
+        {concerns.map((concern, index) => (
+          <View key={index} style={styles.concern}>
+            <Text>Type: {concern.type}</Text>
+            <Text>Comment: {concern.comment}</Text>
+            <Text>Corrective Action: {concern.correctiveAction}</Text>
+            <Text>Status: {concern.status}</Text>
+            <Text>Project Manager: {concern.projectManager}</Text>
+            <Text>Auditor: {concern.auditor}</Text>
+            {/* Add action buttons here */}
+            <TouchableOpacity style={styles.actionButton}>
+              <Text>View</Text>
+            </TouchableOpacity>
+            {/* Add other action buttons as needed */}
+          </View>
+        ))}
+      </ScrollView>
 
-            {/* Environmental Concerns List */}
-            <ScrollView>
-                {/* Render Environmental Concerns List */}
-                {/* Replace this with the actual list of environmental concerns */}
-                <View>
-                    <Text>Environmental Concern 1</Text>
-                    {/* Include other details */}
-                </View>
-                {/* Repeat for other concerns */}
-            </ScrollView>
-
-            {/* Modal for Adding Free Form */}
-            <Modal visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-                <View>
-                    <Text>Add Free Form</Text>
-                    <TextInput
-                        placeholder="Type"
-                        value={type}
-                        onChangeText={setType}
-                    />
-                    <TextInput
-                        placeholder="Comment"
-                        value={comment}
-                        onChangeText={setComment}
-                        multiline
-                    />
-                    <TextInput
-                        placeholder="Corrective Action"
-                        value={correctiveAction}
-                        onChangeText={setCorrectiveAction}
-                        multiline
-                    />
-                    <TextInput
-                        placeholder="Project Manager"
-                        value={projectManager}
-                        onChangeText={setProjectManager}
-                    />
-                    <TextInput
-                        placeholder="Auditor"
-                        value={auditor}
-                        onChangeText={setAuditor}
-                    />
-                    <Button title="Save" onPress={handleSubmit} />
-                    <Button title="Cancel" onPress={() => setModalVisible(false)} />
-                </View>
-            </Modal>
+      {/* Modal for adding new concern */}
+      <Modal visible={isModalVisible} animationType="slide">
+        <View style={styles.modalContent}>
+          {/* Add form fields for adding new concern */}
+          <TextInput placeholder="Type" style={styles.input} />
+          <TextInput placeholder="Comment" style={styles.input} />
+          <TextInput placeholder="Corrective Action" style={styles.input} />
+          <TextInput placeholder="Status" style={styles.input} />
+          <TextInput placeholder="Project Manager" style={styles.input} />
+          <TextInput placeholder="Auditor" style={styles.input} />
+          {/* Add submit button */}
+          <Button title="Save" onPress={() => setIsModalVisible(false)} />
         </View>
-    );
+      </Modal>
+
+      {/* Button to toggle modal visibility */}
+      <TouchableOpacity style={styles.addButton} onPress={() => setIsModalVisible(true)}>
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+  },
+  concern: {
+    marginBottom: 20,
+    borderWidth: 1,
+    padding: 10,
+  },
+  actionButton: {
+    padding: 10,
+    backgroundColor: 'blue',
+    borderRadius: 5,
+  },
+  modalContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    marginBottom: 10,
+    padding: 10,
+    width: '100%',
+    borderRadius: 5,
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    padding: 10,
+    backgroundColor: 'blue',
+    borderRadius: 5,
+  },
+});
 
 export default EnvironmentalConcernsScreen;

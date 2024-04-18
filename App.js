@@ -77,9 +77,9 @@ export default function App() {
           name="Permits Applicable"
           component={PermitsApplicableScreen}
         />
-        <Stack.Screen name="AddIncident" component={AddIncidentScreen} />
-        <Stack.Screen name="AddRecord" component={AddRecordScreen} />
-        <Stack.Screen name="AddIca" component={AddIcaScreen} />
+        <Stack.Screen name="Add Incident" component={AddIncidentScreen} />
+        <Stack.Screen name="Add Record" component={AddRecordScreen} />
+        <Stack.Screen name="Add Ica" component={AddIcaScreen} />
         <Stack.Screen name="ViewIca" component={ViewIcaScreen} />
       </Stack.Navigator>
     </NavigationContainer>
@@ -106,7 +106,6 @@ const LoginScreen = ({ navigation }) => {
         email,
         password
       });
-      console.log(response);
       if (response.status === 200) {
         // Save token to AsyncStorage
         await AsyncStorage.setItem("token", response.data.token);
@@ -133,7 +132,6 @@ const LoginScreen = ({ navigation }) => {
         setSuccessMessage(""); // Clear any previous success message
       } else if (error.response.status === 422) {
         // Display error message
-        console.log(error.response);
         setErrorMessage(error.response.data.message);
         setSuccessMessage(""); // Clear any previous success message
       } else {

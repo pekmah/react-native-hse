@@ -89,7 +89,7 @@ const VerticalNav = () => {
             <View style={styles.submenu}>
               <SubMenuItem
                 title="Add Record"
-                onPress={() => handleSorSubmenuPress("AddRecord")}
+                onPress={() => handleSorSubmenuPress("Add Record")}
               />
               <SubMenuItem
                 title="Open SOR's"
@@ -121,7 +121,7 @@ const VerticalNav = () => {
             <View style={styles.submenu}>
               <SubMenuItem
                 title="Add Incident"
-                onPress={() => handleIncidentSubmenuPress("AddIncident")}
+                onPress={() => handleIncidentSubmenuPress("Add Incident")}
               />
               <SubMenuItem
                 title="Open Incidents"
@@ -159,7 +159,7 @@ const VerticalNav = () => {
             <View style={styles.submenu}>
               <SubMenuItem
                 title="Add ICA's"
-                onPress={() => handleImediateCorrectiveActionSubmenuPress("AddIca")}
+                onPress={() => handleImediateCorrectiveActionSubmenuPress("Add Ica")}
               />
               <SubMenuItem
                 title="View ICA's"
