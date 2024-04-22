@@ -1,173 +1,255 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
-  Image,
   Modal,
+  TextInput,
+  DrawerLayoutAndroid,
   StyleSheet,
+  Button
 } from "react-native";
-import axios from "axios";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const NearMissScreen = () => {
   const [nearMisses, setNearMisses] = useState([]);
-  const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [selectedNearMiss, setSelectedNearMiss] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
+
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
+ 
+  const getNearMisses = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await ApiManager.get("/near-miss", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        setNearMisses(response.data.data);
+      }
+      else {
+        console.log("Error");
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }
 
   useEffect(() => {
-    fetchNearMisses();
-  }, []);
+    getNearMisses();
+  }
+  , []);
 
-  const fetchNearMisses = async () => {
-    try {
-      const response = await axios.get("your_api_endpoint_here");
-      setNearMisses(response.data);
-    } catch (error) {
-      console.error("Error fetching near misses:", error);
-    }
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const totalPages = Math.ceil(nearMisses.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
   };
 
-  const handleSearch = async () => {
-    try {
-      const response = await axios.get("your_search_api_endpoint_here", {
-        params: { search },
-      });
-      setNearMisses(response.data);
-    } catch (error) {
-      console.error("Error searching near misses:", error);
-    }
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
   };
 
-  const handleShowModal = (nearMiss) => {
-    setSelectedNearMiss(nearMiss);
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const renderNearMisses = () => {
+    return nearMisses && nearMisses.length > 0 ?(
+      nearMisses
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((nearMiss) => (
+          <View
+           key={nearMiss.id}   style={{
+            flexDirection: "row",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 8
+          }}
+        >
+          <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+            {nearMiss.incident_description}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007bff",
+                padding: 4,
+                borderRadius: 5,
+                marginRight: 16,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 30
+              }}
+              onPress={() => {}}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ))
+    ) : (
+      <Text style={{ textAlign: "center", padding: 10 }}>
+        No incidents found
+      </Text>
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Near Miss Manager</Text>
-      {/* <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search Description"
-          value={search}
-          onChangeText={setSearch}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>Search</Text>
-        </TouchableOpacity>
-      </View> */}
-      <ScrollView>
-        {nearMisses.map((nearMiss) => (
-          <TouchableOpacity
-            key={nearMiss.id}
-            style={styles.nearMissItem}
-            onPress={() => handleShowModal(nearMiss)}
-          >
-            <Text style={styles.nearMissText}>
-              ID: {nearMiss.id}, Description: {nearMiss.incident_description}
-            </Text>
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Wrap the content in a ScrollView */}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+          onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
           </TouchableOpacity>
-        ))}
-      </ScrollView>
-      <Modal visible={showModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalHeading}>Near Miss Details</Text>
-          {selectedNearMiss && (
-            <View style={styles.modalContent}>
-              <Text>Description: {selectedNearMiss.incident_description}</Text>
-              <Text>
-                Reporting Done: {selectedNearMiss.incident_status === "yes" ? "Done" : "Not Done"}
-              </Text>
-              <Text>
-                Investigation:{" "}
-                {selectedNearMiss.investigation_status === "open" ? "Open" : "Closed"}
-              </Text>
-              <Text>Date: {selectedNearMiss.incident_date}</Text>
-              {/* Display media if needed */}
+          {/* Header */}
+          <Text style={styles.title}>
+            Near Misses
+          </Text>
+          <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>
+                Incident Description
+                </Text>
+              <Text style={[styles.heading, styles.column]}>Actions</Text>
             </View>
-          )}
-          <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-    </View>
+            {renderNearMisses()}
+            {/* Pagination controls */}
+            <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 Opticom Ltd. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
   },
   heading: {
-    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
     padding: 10,
-    marginRight: 10,
+    textAlign: "center"
   },
-  searchButton: {
-    backgroundColor: "#007bff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  searchButtonText: {
-    color: "#fff",
-  },
-  nearMissItem: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  nearMissText: {
-    fontSize: 16,
-  },
-  modalContainer: {
+  column: {
     flex: 1,
-    padding: 20,
-    justifyContent: "center",
+    padding: 10
   },
-  modalHeading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
+  text: {
+    textAlign: "center"
   },
-  modalContent: {
-    marginBottom: 20,
-  },
-  closeButton: {
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
     backgroundColor: "#007bff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    alignSelf: "flex-end",
+    borderRadius: 5
   },
-  closeButtonText: {
-    color: "#fff",
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
   },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
+  }
 });
 
 export default NearMissScreen;
+
+
+
+  

@@ -13,7 +13,7 @@ import {
   Alert
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import {  FlatList } from "react-native-gesture-handler";
+import { FlatList } from "react-native-gesture-handler";
 import * as ImagePicker from "expo-image-picker";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -150,27 +150,39 @@ const AddIncidentScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
+  const fetchIncidentTypes = async () => {
+    try {
+      // Retrieve token from local storage
+      const token = await AsyncStorage.getItem("token");
+
+      // Fetch incident types
+      const { data } = await ApiManager.get("/incident-types", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      console.log("Incident types:", data);
+
+      // Process incident types
+      const processedNames = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => {
+          let processedValue = value.replace(/_/g, " "); // Replace underscores with spaces
+          processedValue = processedValue.replace(/\b\w/g, (char) =>
+            char.toUpperCase()
+          ); // Capitalize each word
+          return [key, processedValue];
+        })
+      );
+
+      setIncidentTypes(processedNames);
+    } catch (error) {
+      console.error("Error fetching incident types:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchSorTypes = async () => {
-      try {
-        //retrieve token from local storage
-        const token = await AsyncStorage.getItem("token");
-
-        //fetch SOR types
-        const { data } = await ApiManager.get("/sor-types", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log("Incident Types", data);
-
-        setIncidentTypes(data);
-      } catch (error) {
-        console.error("Error fetching Incident Types:", error);
-      }
-    };
-
-    fetchSorTypes();
+    fetchIncidentTypes();
   }, []);
 
   const handleOpenModal = () => {
@@ -194,6 +206,7 @@ const AddIncidentScreen = () => {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
+    //fetch user from local storage
     setLoading(true);
 
     const formData = new FormData();
@@ -203,13 +216,12 @@ const AddIncidentScreen = () => {
     formData.append("investigation_status", investigationStatus);
     formData.append("incident_status", incidentStatus);
     formData.append("incident_type_id", incidentType);
-    formData.append("user_id", 1);
 
     //loop through the images and add them to the images array
     for (let i = 0; i < images.length; i++) {
       const image = {
         uri: images[i],
-        name: Date.now() + "." + i + images[i].split(".").pop(),
+        name: Date.now() + i + "." + images[i].split(".").pop(),
         type: `image/${images[i].split(".").pop()}` // Ensure correct content type
       };
       formData.append("images[]", image); // Use key with square brackets
@@ -222,52 +234,53 @@ const AddIncidentScreen = () => {
   //onSubmit function
   const onSubmit = async (formData) => {
     console.log("submitting form data", formData);
-    setLoading(false);
-    // try {
-    //   //retrieve token from local storage
-    //   const token = await AsyncStorage.getItem("token");
-    //   console.log("retrieve token", token);
+    try {
+      //retrieve token from local storage
+      const token = await AsyncStorage.getItem("token");
+      console.log("retrieve token", token);
+      //fetch user from local storage
+      const user = await AsyncStorage.getItem("user");
+      //get user id
+      const userId = JSON.parse(user).id;
+      //add user id to form data
+      formData.append("user_id", userId);
+      //create incident
+      const response = await fetch(`${config.apiBaseUrl}/add-incident`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
+        body: formData
+      });
+      console.log("submitting form data", formData);
 
-    //   //create SOR record and upload images
-    //   const response = await fetch(`${config.apiBaseUrl}/add-sor`, {
-    //     method: "POST",
-    //     headers: {
-    //       Authorization: `Bearer ${token}`,
-    //       "Content-Type": "multipart/form-data"
-    //     },
-    //     body: formData
-    //   });
+      console.log("response", response);
 
-    //   console.log("submitting form data", formData);
+      if (response.status !== 200) {
+        setLoading(false);
+        throw new Error("Failed to create SOR record.");
+      } else {
+        setIncidentDescription("");
+        setInvestigationStatus("open");
+        setIncidentStatus("no");
+        setIncidentType("");
 
-    //   console.log("response", response);
+        //loop through the images and delete them from the images array
+        for (let i = 0; i < images.length; i++) {
+          await FileSystem.deleteAsync(images[i]);
+          //update images array
+          images = [];
+        }
 
-    //   if (response.status !== 200) {
-    //     setLoading(false);
-    //     throw new Error("Failed to create SOR record.");
-    //   } else {
-    //     setObservation("");
-    //     setStatus("0");
-    //     setStepsTaken("");
-    //     setActionOwner("");
-    //     setSelectedType("");
-
-    //     //loop through the images and delete them from the images array
-    //     for (let i = 0; i < images.length; i++) {
-    //       await FileSystem.deleteAsync(images[i]);
-    //       //update images array
-    //       images = [];
-    //     }
-
-    //     console.log("SOR record created:", formData);
-    //     setLoading(false);
-    //     Alert.alert("Success", "SOR record created successfully.");
-    //   }
-    // } catch (error) {
-    //   console.error("Error creating SOR record:", error);
-    //   setLoading(false);
-    //   Alert.alert("Error", "Failed to create SOR record.");
-    // }
+        setLoading(false);
+        Alert.alert("Success", "Incident record created successfully.");
+      }
+    } catch (error) {
+      console.error("Error creating SOR record:", error.response);
+      setLoading(false);
+      Alert.alert("Error", "Failed to create SOR record.");
+    }
   };
 
   return (
@@ -348,7 +361,7 @@ const AddIncidentScreen = () => {
             keyExtractor={(item) => item}
             horizontal
           />
-        <View style={{ marginBottom: 16 }}>
+          <View style={{ marginBottom: 16 }}>
             <Text>Incident Type</Text>
             <Picker
               selectedValue={incidentType}
@@ -419,6 +432,5 @@ const styles = StyleSheet.create({
     textAlign: "center"
   }
 });
-
 
 export default AddIncidentScreen;

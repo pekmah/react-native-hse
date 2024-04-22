@@ -1,96 +1,248 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Button } from 'react-native';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MedicalTreatedCaseScreen = () => {
-    const [search, setSearch] = useState('');
-    const [medicalTreatedCases, setMedicalTreatedCases] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedCase, setSelectedCase] = useState(null);
+  const [medicalTreatedCases, setMedicalTreatedCases] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
 
-    useEffect(() => {
-        // Fetch medical treated cases data
-        // Replace the API call with your actual fetch logic
-        fetchMedicalTreatedCases();
-    }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
 
-    const fetchMedicalTreatedCases = () => {
-        // Perform API call to fetch medical treated cases data
-        // Replace the API endpoint with your actual endpoint
-        fetch('your_api_endpoint_here')
-            .then(response => response.json())
-            .then(data => setMedicalTreatedCases(data))
-            .catch(error => console.error('Error fetching medical treated cases:', error));
-    };
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
 
-    const handleSearch = () => {
-        // Perform search functionality
-        // Replace with your search logic
-    };
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
 
-    const openDetailsModal = (id) => {
-        // Fetch details of the selected medical treated case
-        // Replace with your fetch logic
-        setSelectedCase(/* fetched data for the selected case */);
-        setModalVisible(true);
-    };
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
 
-    const closeModal = () => {
-        setModalVisible(false);
-    };
+  const getMedicalTreatedCases = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await ApiManager.get("/medical-treatment-case", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-    const renderMedicalTreatedCases = () => {
-        // return medicalTreatedCases.map(case => (
-        //     <TouchableOpacity key={case.id} onPress={() => openDetailsModal(case.id)}>
-        //         <View>
-        //             <Text>ID: {case.id}</Text>
-        //             <Text>Investigation: {case.investigation_status === 'open' ? 'Open' : 'Closed'}</Text>
-        //             <Text>Reporting Done: {case.incident_status === 'yes' ? 'Done' : 'Not Done'}</Text>
-        //             <Text>Date: {case.incident_date}</Text>
-        //             <Text>Description: {case.incident_description}</Text>
-        //             {/* Add more fields as needed */}
-        //         </View>
-        //     </TouchableOpacity>
-        // ));
-    };
+      if (response.status === 200) {
+        setMedicalTreatedCases(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    return (
-        <View>
-            <Text>Medical Treated Case Manager</Text>
-            <TextInput
-                style={{ borderWidth: 1, borderColor: 'black', padding: 5 }}
-                placeholder="Search Description"
-                value={search}
-                onChangeText={text => setSearch(text)}
-            />
-            <TouchableOpacity onPress={handleSearch}>
-                <Text>Search</Text>
+  useEffect(() => {
+    getMedicalTreatedCases();
+  }, []);
+
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const totalPages = Math.ceil(medicalTreatedCases.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const renderMedicalTreatedCases = () => {
+    return medicalTreatedCases && medicalTreatedCases.length > 0 ? (
+      medicalTreatedCases
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((medicalTreatedCase) => (
+          <View
+            key={medicalTreatedCase.id}
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ccc",
+              paddingVertical: 8
+            }}
+          >
+            <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+              {medicalTreatedCase.incident_description}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007bff",
+                padding: 4,
+                borderRadius: 5,
+                marginRight: 16,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 30
+              }}
+              onPress={() => {}}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
-
-            <ScrollView>
-                {medicalTreatedCases.length === 0 ? (
-                    <Text>No data found.</Text>
-                ) : (
-                    renderMedicalTreatedCases()
-                )}
-            </ScrollView>
-
-            <Modal visible={modalVisible} onRequestClose={closeModal}>
-                <View>
-                    <Text>Medical Treatment Case Details</Text>
-                    {selectedCase && (
-                        <View>
-                            <Text>Status: {selectedCase.investigation_status}</Text>
-                            <Text>Steps Taken: {selectedCase.incident_status}</Text>
-                            <Text>Date: {selectedCase.incident_date}</Text>
-                            <Text>Description: {selectedCase.incident_description}</Text>
-                            {/* Render media if available */}
-                        </View>
-                    )}
-                    <Button title="Close" onPress={closeModal} />
-                </View>
-            </Modal>
-        </View>
+          </View>
+        ))
+    ) : (
+      <Text style={{ textAlign: "center", padding: 10 }}>
+        No medical treated cases found
+      </Text>
     );
+  };
+
+  return (
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Wrap the content in a ScrollView */}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+          onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
+          </TouchableOpacity>
+          {/* Header */}
+          <Text style={styles.title}>Medical Treated Cases</Text>
+          <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>
+                Incident Description
+              </Text>
+              <Text style={[styles.heading, styles.column]}>Actions</Text>
+            </View>
+            {renderMedicalTreatedCases()}
+            {/* Pagination controls */}
+            <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 Opticom Ltd. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  column: {
+    flex: 1,
+    padding: 10
+  },
+  text: {
+    textAlign: "center"
+  },
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
+  },
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
+  },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
+  }
+});
 
 export default MedicalTreatedCaseScreen;

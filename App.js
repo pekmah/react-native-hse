@@ -46,31 +46,31 @@ export default function App() {
         <Stack.Screen name="Supervisor" component={SupervisorScreen} />
         <Stack.Screen name="Personnel" component={PersonnelScreen} />
         <Stack.Screen name="Tasks" component={TasksScreen} />
-        <Stack.Screen name="OpenIncidents" component={OpenIncidentsScreen} />
-        <Stack.Screen name="OpenSors" component={OpenSorsScreen} />
+        <Stack.Screen name="Open Incidents" component={OpenIncidentsScreen} />
+        <Stack.Screen name="Open Sors" component={OpenSorsScreen} />
         <Stack.Screen
-          name="ReportedHazards"
+          name="Reported Hazards"
           component={ReportedHazardsScreen}
         />
-        <Stack.Screen name="NearMiss" component={NearMissScreen} />
+        <Stack.Screen name="Near Miss" component={NearMissScreen} />
         <Stack.Screen
-          name="LostTimeAccident"
+          name="Lost Time Accident"
           component={LostTimeAccidentScreen}
         />
         <Stack.Screen
-          name="MedicalTreatmentCase"
+          name="Medical Treatment Case"
           component={MedicalTreatmentCaseScreen}
         />
-        <Stack.Screen name="FirstAidCase" component={FirstAidCaseScreen} />
+        <Stack.Screen name="First Aid Case" component={FirstAidCaseScreen} />
         <Stack.Screen name="SIF" component={SIFScreen} />
         <Stack.Screen
-          name="EnvironmentalConcerns"
+          name="Environmental Concerns"
           component={EnvironmentalConcernsScreen}
         />
-        <Stack.Screen name="BadPractises" component={BadPractisesScreen} />
-        <Stack.Screen name="GoodPractises" component={GoodPractisesScreen} />
+        <Stack.Screen name="Bad Practises" component={BadPractisesScreen} />
+        <Stack.Screen name="Good Practises" component={GoodPractisesScreen} />
         <Stack.Screen
-          name="SuggestedImprovements"
+          name="Suggested Improvements"
           component={SuggestedImprovementsScreen}
         />
         <Stack.Screen
@@ -80,7 +80,7 @@ export default function App() {
         <Stack.Screen name="Add Incident" component={AddIncidentScreen} />
         <Stack.Screen name="Add Record" component={AddRecordScreen} />
         <Stack.Screen name="Add Ica" component={AddIcaScreen} />
-        <Stack.Screen name="ViewIca" component={ViewIcaScreen} />
+        <Stack.Screen name="View Ica" component={ViewIcaScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -111,6 +111,7 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem("token", response.data.token);
         // Save user to AsyncStorage
         await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
+
         //clear inputs
         setEmail("");
         setPassword("");

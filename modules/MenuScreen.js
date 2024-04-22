@@ -93,23 +93,23 @@ const VerticalNav = () => {
               />
               <SubMenuItem
                 title="Open SOR's"
-                onPress={() => handleSorSubmenuPress("OpenSors")}
+                onPress={() => handleSorSubmenuPress("Open Sors")}
               />
               <SubMenuItem
                 title="Reported Hazards"
-                onPress={() => handleSorSubmenuPress("ReportedHazards")}
+                onPress={() => handleSorSubmenuPress("Reported Hazards")}
               />
               <SubMenuItem
                 title="Suggested Improvements"
-                onPress={() => handleSorSubmenuPress("SuggestedImprovements")}
+                onPress={() => handleSorSubmenuPress("Suggested Improvements")}
               />
               <SubMenuItem
                 title="Good Practises"
-                onPress={() => handleSorSubmenuPress("GoodPractises")}
+                onPress={() => handleSorSubmenuPress("Good Practises")}
               />
               <SubMenuItem
                 title="Bad Practises"
-                onPress={() => handleSorSubmenuPress("BadPractises")}
+                onPress={() => handleSorSubmenuPress("Bad Practises")}
               />
             </View>
           )}
@@ -125,23 +125,23 @@ const VerticalNav = () => {
               />
               <SubMenuItem
                 title="Open Incidents"
-                onPress={() => handleIncidentSubmenuPress("OpenIncidents")}
+                onPress={() => handleIncidentSubmenuPress("Open Incidents")}
               />
               <SubMenuItem
                 title="Near Miss"
-                onPress={() => handleIncidentSubmenuPress("NearMiss")}
+                onPress={() => handleIncidentSubmenuPress("Near Miss")}
               />
               <SubMenuItem
                 title="First Aid Case"
-                onPress={() => handleIncidentSubmenuPress("FirstAidCase")}
+                onPress={() => handleIncidentSubmenuPress("First Aid Case")}
               />
               <SubMenuItem
                 title="Medical Treated Case"
-                onPress={() => handleIncidentSubmenuPress("MedicalTreatmentCase")}
+                onPress={() => handleIncidentSubmenuPress("Medical Treatment Case")}
               />
               <SubMenuItem
                 title="Lost Time Accidents"
-                onPress={() => handleIncidentSubmenuPress("LostTimeAccident")}
+                onPress={() => handleIncidentSubmenuPress("Lost Time Accident")}
               />
               <SubMenuItem
                 title="SIF"
@@ -164,7 +164,7 @@ const VerticalNav = () => {
               <SubMenuItem
                 title="View ICA's"
                 onPress={() =>
-                  handleImediateCorrectiveActionSubmenuPress("ViewIca")
+                  handleImediateCorrectiveActionSubmenuPress("View Ica")
                 }
               />
             </View>
@@ -179,7 +179,7 @@ const VerticalNav = () => {
           />
             <MenuItem
             title="Environmental Concerns"
-            onPress={() => handleMenuItemPress("EnvironmentalConcerns")}
+            onPress={() => handleMenuItemPress("Environmental Concerns")}
             />
         </ScrollView>
       </ScrollView>

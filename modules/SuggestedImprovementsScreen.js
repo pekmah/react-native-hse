@@ -1,111 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SuggestedImprovementsScreen = () => {
-    const [search, setSearch] = useState('');
-    const [improvements, setImprovements] = useState([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
+  const [improvements, setImprovements] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
 
-    // Mocked improvements data, replace with actual data fetching logic
-    useEffect(() => {
-        const mockedImprovements = [
-            { id: 1, observation: 'Observation 1', steps_taken: 'Steps taken 1', date: '2024-03-26', status: 0 },
-            { id: 2, observation: 'Observation 2', steps_taken: 'Steps taken 2', date: '2024-03-27', status: 1 },
-        ];
-        setImprovements(mockedImprovements);
-    }, []);
+  // Mocked improvements data, replace with actual data fetching logic
+  useEffect(() => {
+    fetchImprovements();
 
-    const handleSearch = () => {
-        // Handle search logic here
+  }, []);
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
+
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
+
+  const fetchImprovements = async () => {
+    try {
+      // Retrieve token from local storage
+      const token = await AsyncStorage.getItem("token");
+      // Fetch improvements from the API
+      const response = await ApiManager.get("/improvements", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Handle the response
+      if (response.status === 200) {
+        setImprovements(response.data.data);
+      } else {
+        // Handle error
+        console.error(response.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+ 
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const totalPages = Math.ceil(improvements.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const renderImprovements = () => {
+    return improvements
+    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    .map((improvement) => (
+        <View
+        key={improvement.id}
+        style={{
+            flexDirection: "row",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 8
+          }}
+        >
+          <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+            {improvement.observation}
+            </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#007bff",
+              padding: 4,
+              borderRadius: 5,
+              marginRight: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              height: 30
+            }}
+            onPress={() => {
+            }}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ));
     };
-
-    const handleViewImprovement = (id) => {
-        // Handle viewing improvement details
-    };
-
-    const handleEditImprovement = (id) => {
-        // Handle editing improvement details
-    };
-
-    const handleDeleteImprovement = (id) => {
-        // Handle deleting improvement
-    };
-
+  
     return (
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 24 }}>
-                <Text style={{ fontWeight: 'bold', marginBottom: 16 }}>Suggested Improvements</Text>
-
-                <View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                        <TextInput
-                            style={{ flex: 1, borderWidth: 1, borderColor: '#ccc', padding: 8, marginRight: 8 }}
-                            placeholder="Search observations"
-                            value={search}
-                            onChangeText={setSearch}
-                        />
-                        <TouchableOpacity
-                            style={{ backgroundColor: '#007bff', padding: 8, borderRadius: 4 }}
-                            onPress={handleSearch}
-                        >
-                            <Text style={{ color: '#fff' }}>Search</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={{ borderWidth: 1, borderColor: '#ccc', marginBottom: 16 }}>
-                        <Text style={{ fontWeight: 'bold', marginBottom: 8 }}>Improvements List</Text>
-                        <ScrollView horizontal>
-                            <View>
-                                <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ccc' }}>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Id</Text>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Observation</Text>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Steps Taken</Text>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Date</Text>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Status</Text>
-                                    <Text style={{ fontWeight: 'bold', marginRight: 16 }}>Action</Text>
-                                </View>
-                                {improvements.map((improvement) => (
-                                    <View key={improvement.id} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ccc', paddingVertical: 8 }}>
-                                        <Text style={{ marginRight: 16 }}>{improvement.id}</Text>
-                                        <Text style={{ marginRight: 16 }}>{improvement.observation}</Text>
-                                        <Text style={{ marginRight: 16 }}>{improvement.steps_taken}</Text>
-                                        <Text style={{ marginRight: 16 }}>{improvement.date}</Text>
-                                        <Text style={{ marginRight: 16 }}>{improvement.status === 0 ? 'Open' : 'Closed'}</Text>
-                                        <TouchableOpacity
-                                            style={{ backgroundColor: '#007bff', padding: 4, borderRadius: 4 }}
-                                            onPress={() => handleViewImprovement(improvement.id)}
-                                        >
-                                            <Text style={{ color: '#fff', paddingHorizontal: 8 }}>View</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{ backgroundColor: '#007bff', padding: 4, borderRadius: 4, marginLeft: 8 }}
-                                            onPress={() => handleEditImprovement(improvement.id)}
-                                        >
-                                            <Text style={{ color: '#fff', paddingHorizontal: 8 }}>Edit</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{ backgroundColor: '#dc3545', padding: 4, borderRadius: 4, marginLeft: 8 }}
-                                            onPress={() => handleDeleteImprovement(improvement.id)}
-                                        >
-                                            <Text style={{ color: '#fff', paddingHorizontal: 8 }}>Delete</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </View>
-                        </ScrollView>
-                    </View>
-
-                    <View style={{ alignItems: 'center' }}>
-                        <TouchableOpacity
-                            style={{ backgroundColor: '#007bff', padding: 8, borderRadius: 4 }}
-                            onPress={() => {}}
-                        >
-                            <Text style={{ color: '#fff' }}>Load More</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+      <DrawerLayoutAndroid
+        ref={drawerRef}
+        drawerWidth={200}
+        drawerPosition="left"
+        renderNavigationView={navigationView}
+      >
+        <View style={{ flex: 1 }}>
+          {/* Wrap the content in a ScrollView */}
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+            onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+          >
+            <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+              <Ionicons name="menu" size={24} color="black" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Suggested Improvements</Text>
+            <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>Observation</Text>
+              <Text style={[styles.heading, styles.column]}>Action</Text>
+            </View>
+            {renderImprovements()}
+               {/* Pagination controls */}
+               <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
             </View>
         </ScrollView>
-    );
+      </View>
+    </DrawerLayoutAndroid>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  column: {
+    flex: 1,
+    padding: 10
+  },
+  text: {
+    textAlign: "center"
+  },
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
+  },
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
+  }
+});
 
 export default SuggestedImprovementsScreen;

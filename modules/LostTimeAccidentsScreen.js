@@ -1,96 +1,251 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Button } from 'react-native';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LostTimeAccidentsScreen = () => {
-    const [search, setSearch] = useState('');
-    const [lostTimeAccidents, setLostTimeAccidents] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedCase, setSelectedCase] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
+  const [lostTimeAccidents, setLostTimeAccidents] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null); const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
+
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
+
+  const getLostTimeAccidents = async () => {
+    try {
+        const token = await AsyncStorage.getItem("token");
+        const response = await ApiManager.get("/lost-time-accident" , {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (response.status === 200) {
+            setLostTimeAccidents(response.data.data);
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+    };
 
     useEffect(() => {
-        // Fetch lost time accidents data
-        // Replace the API call with your actual fetch logic
-        fetchLostTimeAccidents();
-    }, []);
+        getLostTimeAccidents();
+    }
+    , []);
 
-    const fetchLostTimeAccidents = () => {
-        // Perform API call to fetch lost time accidents data
-        // Replace the API endpoint with your actual endpoint
-        fetch('your_api_endpoint_here')
-            .then(response => response.json())
-            .then(data => setLostTimeAccidents(data))
-            .catch(error => console.error('Error fetching lost time accidents:', error));
-    };
+    const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
-    const handleSearch = () => {
-        // Perform search functionality
-        // Replace with your search logic
-    };
+  const totalPages = Math.ceil(lostTimeAccidents.length / itemsPerPage);
 
-    const openDetailsModal = (id) => {
-        // Fetch details of the selected lost time accident case
-        // Replace with your fetch logic
-        setSelectedCase(/* fetched data for the selected case */);
-        setModalVisible(true);
-    };
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
 
-    const closeModal = () => {
-        setModalVisible(false);
-    };
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
 
-    const renderLostTimeAccidents = () => {
-        // return lostTimeAccidents.map(case => (
-        //     <TouchableOpacity key={case.id} onPress={() => openDetailsModal(case.id)}>
-        //         <View>
-        //             <Text>ID: {case.id}</Text>
-        //             <Text>Investigation: {case.investigation_status === 'open' ? 'Open' : 'Closed'}</Text>
-        //             <Text>Reporting Done: {case.incident_status === 'yes' ? 'Done' : 'Not Done'}</Text>
-        //             <Text>Date: {case.incident_date}</Text>
-        //             <Text>Description: {case.incident_description}</Text>
-        //             {/* Add more fields as needed */}
-        //         </View>
-        //     </TouchableOpacity>
-        // ));
-    };
-
-    return (
-        <View>
-            <Text>Lost Time Accident Case Manager</Text>
-            <TextInput
-                style={{ borderWidth: 1, borderColor: 'black', padding: 5 }}
-                placeholder="Search Description"
-                value={search}
-                onChangeText={text => setSearch(text)}
-            />
-            <TouchableOpacity onPress={handleSearch}>
-                <Text>Search</Text>
+  const renderLostTimeAccidents = () => {
+    return lostTimeAccidents && lostTimeAccidents.length > 0 ? (
+        lostTimeAccidents
+          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+          .map((lostTimeAccident) => (
+            <View
+              key={lostTimeAccident.id}
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc",
+                paddingVertical: 8
+              }}
+            >
+              <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+                {lostTimeAccident.incident_description}
+                </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007bff",
+                padding: 4,
+                borderRadius: 5,
+                marginRight: 16,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 30
+              }}
+              onPress={() => {}}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
-
-            <ScrollView>
-                {lostTimeAccidents.length === 0 ? (
-                    <Text>No data found.</Text>
-                ) : (
-                    renderLostTimeAccidents()
-                )}
-            </ScrollView>
-
-            <Modal visible={modalVisible} onRequestClose={closeModal}>
-                <View>
-                    <Text>Lost Time Accident Case Details</Text>
-                    {selectedCase && (
-                        <View>
-                            <Text>Status: {selectedCase.investigation_status}</Text>
-                            <Text>Steps Taken: {selectedCase.incident_status}</Text>
-                            <Text>Date: {selectedCase.incident_date}</Text>
-                            <Text>Description: {selectedCase.incident_description}</Text>
-                            {/* Render media if available */}
-                        </View>
-                    )}
-                    <Button title="Close" onPress={closeModal} />
-                </View>
-            </Modal>
-        </View>
+          </View>
+        ))
+    ) : (
+      <Text style={{ textAlign: "center", padding: 10 }}>
+        No lost time accidents found
+        </Text>
     );
+    };
+
+
+  return (
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Wrap the content in a ScrollView */}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+          onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
+          </TouchableOpacity>
+          {/* Header */}
+          <Text style={styles.title}>
+            Lost Time Accidents
+            </Text>
+            <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>
+                Incident Description
+              </Text>
+              <Text style={[styles.heading, styles.column]}>Actions</Text>
+            </View>
+            {renderLostTimeAccidents()}
+             {/* Pagination controls */}
+             <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 Opticom Ltd. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  column: {
+    flex: 1,
+    padding: 10
+  },
+  text: {
+    textAlign: "center"
+  },
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
+  },
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
+  },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
+  }
+});
 
 export default LostTimeAccidentsScreen;

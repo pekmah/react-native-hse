@@ -205,13 +205,12 @@ const AddRecordScreen = () => {
     formData.append("steps_taken", stepsTaken);
     formData.append("action_owner", actionOwner);
     formData.append("type_id", selectedType);
-    formData.append("assignor_id", 1);
 
     //loop through the images and add them to the images array
     for (let i = 0; i < images.length; i++) {
       const image = {
         uri: images[i],
-        name: Date.now() + "." + i + images[i].split(".").pop(),
+        name: Date.now()  + i +  "." + images[i].split(".").pop(),
         type: `image/${images[i].split(".").pop()}` // Ensure correct content type
       };
       formData.append("images[]", image); // Use key with square brackets
@@ -227,6 +226,11 @@ const AddRecordScreen = () => {
       //retrieve token from local storage
       const token = await AsyncStorage.getItem("token");
       console.log("retrieve token", token);
+      //retrieve user id from local storage
+      const user = await AsyncStorage.getItem("user");
+      const userId = JSON.parse(user).id;
+      //add user id to form data
+      formData.append("assignor_id", userId);
 
       //create SOR record and upload images
       const response = await fetch(`${config.apiBaseUrl}/add-sor`, {

@@ -1,118 +1,218 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Button, StyleSheet, Image } from 'react-native';
-import axios from 'axios';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BadPractisesScreen = () => {
-    const [badPractices, setBadPractices] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedBadPractice, setSelectedBadPractice] = useState(null);
-
+const BadPractices = () => {
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const drawerRef = useRef(null);    const [badPractices, setBadPractices] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(8);
+  
+    const toggleDrawer = () => {
+      setIsDrawerOpen(!isDrawerOpen);
+      if (!isDrawerOpen) {
+        drawerRef.current.openDrawer();
+      } else {
+        drawerRef.current.closeDrawer();
+      }
+    };
+  
+    const handleOutsideTouch = () => {
+      closeDrawer(); // Close the drawer when touched outside
+    };
+  
+    const closeDrawer = () => {
+      setIsDrawerOpen(false);
+      drawerRef.current.closeDrawer();
+    };
+const fetchBadPractices = async () => {
+    try{
+    const token = await AsyncStorage.getItem("token");
+    const response = await ApiManager.get("/bad-practices", {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        });
+        //handle response
+        if (response.status === 200) {
+            setBadPractices(response.data.data);
+        } else {
+            console.log("Error fetching bad practices");
+        }
+    }
+    catch (error) {
+        console.log("Error fetching bad practices");
+    }
+    };
     useEffect(() => {
         fetchBadPractices();
     }, []);
 
-    const fetchBadPractices = async () => {
-        try {
-            const response = await axios.get('API_URL'); // Replace 'API_URL' with your actual API endpoint
-            setBadPractices(response.data);
-        } catch (error) {
-            console.error('Error fetching bad practices:', error);
-        }
-    };
 
-    const openModal = (badPractice) => {
-        setSelectedBadPractice(badPractice);
-        setModalVisible(true);
-    };
 
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const totalPages = Math.ceil(badPractices.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+const renderBadPractices = () => {
+    return badPractices && badPractices
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((goodPractice) => (
+            <View key={goodPractice.id} style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc",
+                paddingVertical: 8
+              }}
+            >
+              <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+                {goodPractice.observation}
+                </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#007bff",
+              padding: 4,
+              borderRadius: 5,
+              marginRight: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              height: 30
+            }}
+            onPress={() => {
+
+            }}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ));
+    };
+  
     return (
-        <View style={styles.container}>
-            <Text style={styles.heading}>Bad Practices</Text>
-            <ScrollView>
-                {badPractices.map((badPractice) => (
-                    <TouchableOpacity key={badPractice.id} onPress={() => openModal(badPractice)} style={styles.badPracticeItem}>
-                        <Text style={styles.badPracticeTitle}>{badPractice.observation}</Text>
-                        <Text>Status: {badPractice.status === 0 ? 'Open' : 'Closed'}</Text>
-                        {/* Display other details as needed */}
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-
-            {/* Modal for displaying bad practice details */}
-            <Modal visible={modalVisible} animationType="slide">
-                <View style={styles.modalContainer}>
-                    <Text style={styles.modalHeading}>Bad Practice Details</Text>
-                    {selectedBadPractice && (
-                        <View style={styles.modalContent}>
-                            <Text><Text style={styles.boldText}>Observation:</Text> {selectedBadPractice.observation}</Text>
-                            <Text><Text style={styles.boldText}>Steps Taken:</Text> {selectedBadPractice.steps_taken}</Text>
-                            <Text><Text style={styles.boldText}>Date:</Text> {selectedBadPractice.date}</Text>
-                            <Text><Text style={styles.boldText}>Status:</Text> {selectedBadPractice.status === 0 ? 'Open' : 'Closed'}</Text>
-                            {/* Display other details as needed */}
-                            {/* Display images if available */}
-                            {selectedBadPractice.media.length > 0 && (
-                                <View style={styles.imageContainer}>
-                                    {selectedBadPractice.media.map((media, index) => (
-                                        <Image key={index} source={{ uri: media.original_url }} style={styles.image} />
-                                    ))}
-                                </View>
-                            )}
-                        </View>
-                    )}
-                    <Button title="Close" onPress={() => setModalVisible(false)} />
-                </View>
-            </Modal>
-        </View>
-    );
+      <DrawerLayoutAndroid
+        ref={drawerRef}
+        drawerWidth={200}
+        drawerPosition="left"
+        renderNavigationView={navigationView}
+      >
+        <View style={{ flex: 1 }}>
+          {/* Wrap the content in a ScrollView */}
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+            onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+          >
+            <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+              <Ionicons name="menu" size={24} color="black" />
+            </TouchableOpacity>
+            {/* Header */}
+            <Text style={styles.title}>Bad Practices</Text>
+            <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>Observation</Text>
+              <Text style={[styles.heading, styles.column]}>Action</Text>
+            </View>
+            {renderBadPractices()}
+             {/* Pagination controls */}
+             <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
+            </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-    },
-    heading: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    badPracticeItem: {
-        marginBottom: 20,
-        backgroundColor: '#eee',
-        padding: 10,
-        borderRadius: 5,
-    },
-    badPracticeTitle: {
-        fontWeight: 'bold',
-        marginBottom: 5,
-    },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modalHeading: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    modalContent: {
-        marginBottom: 20,
-    },
-    boldText: {
-        fontWeight: 'bold',
-    },
-    imageContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 20,
-    },
-    image: {
-        width: 200,
-        height: 200,
-        marginHorizontal: 10,
-    },
+  container: {
+    flex: 1,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  column: {
+    flex: 1,
+    padding: 10
+  },
+  text: {
+    textAlign: "center"
+  },
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
+  },
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
+  }
 });
 
-export default BadPractisesScreen;
+export default BadPractices;

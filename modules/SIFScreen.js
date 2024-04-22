@@ -1,95 +1,248 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Button } from 'react-native';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SIFCaseScreen = () => {
-    const [search, setSearch] = useState('');
-    const [sifs, setSifs] = useState([]);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedSIF, setSelectedSIF] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
+  const [sifs, setSifs] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedSIF, setSelectedSIF] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
 
-    useEffect(() => {
-        // Fetch SIF cases data
-        fetchSIFCases();
-    }, []);
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
 
-    const fetchSIFCases = () => {
-        // Perform API call to fetch SIF cases data
-        // Replace the API endpoint with your actual endpoint
-        fetch('your_api_endpoint_here')
-            .then(response => response.json())
-            .then(data => setSifs(data))
-            .catch(error => console.error('Error fetching SIF cases:', error));
-    };
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
 
-    const handleSearch = () => {
-        // Perform search functionality
-        // Replace with your search logic
-    };
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
 
-    const openDetailsModal = (id) => {
-        // Fetch details of the selected SIF case
-        // Replace with your fetch logic
-        setSelectedSIF(/* fetched data for the selected case */);
-        setModalVisible(true);
-    };
+  const fetchSIFCases = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await ApiManager.get("/sif", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-    const closeModal = () => {
-        setModalVisible(false);
-    };
+      if (response.status === 200) {
+        setSifs(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    const renderSIFCases = () => {
-        return sifs.map(sif => (
-            <TouchableOpacity key={sif.id} onPress={() => openDetailsModal(sif.id)}>
-                <View>
-                    <Text>ID: {sif.id}</Text>
-                    <Text>Investigation: {sif.investigation_status === 'open' ? 'Open' : 'Closed'}</Text>
-                    <Text>Reporting Done: {sif.incident_status === 'yes' ? 'Done' : 'Not Done'}</Text>
-                    <Text>Date: {sif.incident_date}</Text>
-                    <Text>Description: {sif.incident_description}</Text>
-                    {/* Add more fields as needed */}
-                </View>
+  useEffect(() => {
+    // Fetch SIF cases data
+    fetchSIFCases();
+  }, []);
+
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const totalPages = Math.ceil(sifs.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const renderSifCases = () => {
+    return sifs && sifs.length > 0 ? (
+      sifs
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((sif) => (
+          <View
+            key={sif.id}
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ccc",
+              paddingVertical: 8
+            }}
+          >
+            <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+              {sif.incident_description}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007bff",
+                padding: 4,
+                borderRadius: 5,
+                marginRight: 16,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 30
+              }}
+              onPress={() => {}}
+            >
+              <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
-        ));
-    };
-
-    return (
-        <View>
-            <Text>SIF Case Manager</Text>
-            <TextInput
-                style={{ borderWidth: 1, borderColor: 'black', padding: 5 }}
-                placeholder="Search Description"
-                value={search}
-                onChangeText={text => setSearch(text)}
-            />
-            <TouchableOpacity onPress={handleSearch}>
-                <Text>Search</Text>
-            </TouchableOpacity>
-
-            <ScrollView>
-                {sifs.length === 0 ? (
-                    <Text>No data found.</Text>
-                ) : (
-                    renderSIFCases()
-                )}
-            </ScrollView>
-
-            <Modal visible={modalVisible} onRequestClose={closeModal}>
-                <View>
-                    <Text>SIF Case Details</Text>
-                    {selectedSIF && (
-                        <View>
-                            <Text>Status: {selectedSIF.investigation_status}</Text>
-                            <Text>Steps Taken: {selectedSIF.incident_status}</Text>
-                            <Text>Date: {selectedSIF.incident_date}</Text>
-                            <Text>Description: {selectedSIF.incident_description}</Text>
-                            {/* Render media if available */}
-                        </View>
-                    )}
-                    <Button title="Close" onPress={closeModal} />
-                </View>
-            </Modal>
-        </View>
+          </View>
+        ))
+    ) : (
+      <Text style={{ textAlign: "center", padding: 10 }}>
+        No SIF cases found
+      </Text>
     );
+  };
+
+  return (
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Wrap the content in a ScrollView */}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch} // Handle touch outside drawer
+          onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
+          </TouchableOpacity>
+          {/* Header */}
+          <Text style={styles.title}>SIF Cases</Text>
+          <View style={{ flex: 1, padding: 10 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc"
+              }}
+            >
+              <Text style={[styles.heading, styles.column]}>
+                Incident Description
+              </Text>
+              <Text style={[styles.heading, styles.column]}>Actions</Text>
+            </View>
+            {renderSifCases()}
+            {/* Pagination controls */}
+            <View style={{ flexDirection: "row", justifyContent: "center" }}>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <Text>Previous</Text>
+              </TouchableOpacity>
+              <Text style={styles.pageIndicator}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={styles.paginationButton}
+                onPress={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 Opticom Ltd. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
+  );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  column: {
+    flex: 1,
+    padding: 10
+  },
+  text: {
+    textAlign: "center"
+  },
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
+  },
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
+  },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
+  }
+});
 
 export default SIFCaseScreen;
