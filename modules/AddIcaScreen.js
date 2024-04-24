@@ -1,176 +1,468 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  DrawerLayoutAndroid,
+  StyleSheet,
+  Button,
+  ActivityIndicator,
+  Image,
+  Alert
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import { FlatList } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
+import config from "../config/config";
 
-const AddIcaScreen = () => {
-  const [formData, setFormData] = useState({
-    observation: "",
-    status: "open",
-    steps_taken: "",
-    action_owner: "",
-    images: []
-  });
+let images = [];
 
-  const handleChange = (name, value) => {
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+const UploadImageModal = ({ visible, onClose, onRemoveImage }) => {
+  const imgDir = FileSystem.documentDirectory + "images/uploads/";
+
+  const ensureDirExists = async () => {
+    const dirInfo = await FileSystem.getInfoAsync(imgDir);
+    console.log("dirInfo", dirInfo);
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(imgDir, { intermediates: true });
+    }
   };
 
-  const handleSubmit = () => {
-    // Add your form submission logic here
-    console.log(formData);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need camera roll permissions to make this work!");
+      }
+
+      await ensureDirExists();
+    })();
+
+    // loadImages();
+  }, []);
+
+  const selectImage = async (useLibrary) => {
+    let result;
+
+    if (useLibrary) {
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 1
+      });
+      console.log("Picking images");
+    } else {
+      result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1
+      });
+    }
+
+    if (!result.canceled) {
+      //loop through the images and add them to the images array
+      for (let i = 0; i < result.assets.length; i++) {
+        images.push(result.assets[i].uri);
+        console.log("images beig addedd to array", images);
+      }
+      setSelectedImages([...selectedImages, ...images]);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    onRemoveImage(selectedImages[index]);
+    setSelectedImages(selectedImages.filter((img, i) => i !== index));
+    //update images array
+    images = images.filter((img, i) => i !== index);
+  };
+
+  const closeModal = () => {
+    onClose();
+    setSelectedImages([]);
+  };
+
+  const renderItem = ({ item, index }) => {
+    const filename = item.split("/").pop();
+
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          margin: 1,
+          alignItems: "center",
+          gap: 5
+        }}
+      >
+        <Image source={{ uri: item }} style={styles.images} />
+        <Text style={{ flex: 1 }}>{filename}</Text>
+
+        <Ionicons.Button
+          name="trash"
+          onPress={() => handleRemoveImage(index)}
+        />
+      </View>
+    );
   };
 
   return (
-    // <View style={{ flex: 1, padding: 16 }}>
-    //     <Text style={{ fontWeight: 'bold', fontSize: 24, marginBottom: 20 }}>ICA Records</Text>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Add A Record</Text>
-    //     </View>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text>Observation</Text>
-    //         <TextInput
-    //             style={{ borderWidth: 1, borderColor: 'black', padding: 8 }}
-    //             placeholder="This ...."
-    //             value={formData.observation}
-    //             onChangeText={(text) => handleChange('observation', text)}
-    //         />
-    //     </View>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text>Status</Text>
-    //         <TextInput
-    //             style={{ borderWidth: 1, borderColor: 'black', padding: 8 }}
-    //             placeholder="open"
-    //             value={formData.status}
-    //             onChangeText={(text) => handleChange('status', text)}
-    //         />
-    //     </View>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text>Steps Taken</Text>
-    //         <TextInput
-    //             style={{ borderWidth: 1, borderColor: 'black', padding: 8 }}
-    //             placeholder="Steps taken"
-    //             multiline
-    //             numberOfLines={4}
-    //             value={formData.steps_taken}
-    //             onChangeText={(text) => handleChange('steps_taken', text)}
-    //         />
-    //     </View>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text>Action Owner</Text>
-    //         <TextInput
-    //             style={{ borderWidth: 1, borderColor: 'black', padding: 8 }}
-    //             placeholder="Action Owner"
-    //             value={formData.action_owner}
-    //             onChangeText={(text) => handleChange('action_owner', text)}
-    //         />
-    //     </View>
-
-    //     <View style={{ marginBottom: 20 }}>
-    //         <Text>Images</Text>
-    //         {/* Implement image upload logic here */}
-    //     </View>
-
-    //     <TouchableOpacity
-    //         style={{ backgroundColor: 'blue', padding: 8, borderRadius: 4, alignItems: 'center' }}
-    //         onPress={handleSubmit}
-    //     >
-    //         <Text style={{ color: 'white' }}>Submit</Text>
-    //     </TouchableOpacity>
-    // </View>
-    <ScrollView style={{ padding: 10 }}>
-      <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
-        <Text style={{ fontWeight: "bold", marginBottom: 16 }}>
-          ICA Records
-        </Text>
-        <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 16 }}>
-            Add A Record
-          </Text>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Observation</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              multiline
-              placeholder="Describe the observation"
-              value={formData.observation}
-              onChangeText={(text) => handleChange("observation", text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Status</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              placeholder="open"
-              value={formData.status}
-              onChangeText={(text) => handleChange("status", text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Steps Taken</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              multiline
-              placeholder="Describe the steps taken"
-              value={formData.steps_taken}
-              onChangeText={(text) => handleChange("steps_taken", text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Action Owner</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              placeholder="Enter the action owner"
-              value={formData.action_owner}
-              onChangeText={(text) => handleChange("action_owner", text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Images</Text>
-            {/* Implement image upload logic here */}
-          </View>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "blue",
-              padding: 8,
-              borderRadius: 4,
-              alignItems: "center"
-            }}
-            onPress={handleSubmit}
-          >
-            <Text style={{ color: "white" }}>Submit</Text>
-          </TouchableOpacity>
-        </View>
+    <Modal visible={visible} animationType="slide">
+      <View style={styles.modalContainer}>
+        <Button title="Gallery" onPress={() => selectImage(true)} />
+        <Button title="Camera" onPress={() => selectImage(false)} />
       </View>
-    </ScrollView>
+      <Text style={styles.header}>Selected Images</Text>
+      <FlatList data={selectedImages} renderItem={renderItem} />
+      <Button title="Close" onPress={closeModal} />
+      {loading && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.4)"
+            }
+          ]}
+        >
+          <ActivityIndicator animating size="large" color="#fff" />
+        </View>
+      )}
+    </Modal>
   );
+};
+
+const AddIcaScreen = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
+  const [observation, setObservation] = useState("");
+  const [status, setStatus] = useState("open");
+  const [stepsTaken, setStepsTaken] = useState("");
+  const [actionOwner, setActionOwner] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setLoading] = useState(false);
+  const handleOpenModal = () => {
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
+  const handleRemoveImage = async (uri) => {
+    await FileSystem.deleteAsync(uri);
+    //update images array
+    images = images.filter((img) => img !== uri);
+  };
+
+  // Handle form submission
+
+  const handleSubmit = () => {
+    if (!observation || !status || !stepsTaken || !actionOwner) {
+      Alert.alert("Error", "Please fill all fields.");
+      return;
+    }
+    setLoading(true);
+
+    const formData = new FormData();
+    console.log("formData before", formData);
+
+    formData.append("observation", observation);
+    formData.append("status", status);
+    formData.append("steps_taken", stepsTaken);
+    formData.append("action_owner", actionOwner);
+
+    //loop through the images and add them to the images array
+    for (let i = 0; i < images.length; i++) {
+      const image = {
+        uri: images[i],
+        name: Date.now() + i + "." + images[i].split(".").pop(),
+        type: `image/${images[i].split(".").pop()}` // Ensure correct content type
+      };
+      formData.append("images[]", image); // Use key with square brackets
+    }
+
+    console.log("formData  after", formData);
+    onSubmit(formData);
+  };
+
+  //onSubmit function
+  const onSubmit = async (formData) => {
+    try {
+      //retrieve token from local storage
+      const token = await AsyncStorage.getItem("token");
+      console.log("retrieve token", token);
+      //retrieve user id from local storage
+      const user = await AsyncStorage.getItem("user");
+      const userId = JSON.parse(user).id;
+      //add user id to form data
+      formData.append("assignor_id", userId);
+
+      //create SOR record and upload images
+      const response = await fetch(`${config.apiBaseUrl}/add-sor`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
+        body: formData
+      });
+
+      console.log("submitting form data", formData);
+
+      console.log("response", response);
+
+      if (response.status !== 200) {
+        setLoading(false);
+        throw new Error("Failed to create SOR record.");
+      } else {
+        setObservation("");
+        setStatus("0");
+        setStepsTaken("");
+        setActionOwner("");
+        setSelectedType("");
+
+        //loop through the images and delete them from the images array
+        for (let i = 0; i < images.length; i++) {
+          await FileSystem.deleteAsync(images[i]);
+          //update images array
+          images = [];
+        }
+
+        console.log("SOR record created:", formData);
+        setLoading(false);
+        Alert.alert("Success", "SOR record created successfully.");
+      }
+    } catch (error) {
+      console.error("Error creating SOR record:", error);
+      setLoading(false);
+      Alert.alert("Error", "Failed to create SOR record.");
+    }
+  };
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
+
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
+
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  return (
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch}
+          onScrollBeginDrag={handleOutsideTouch}
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
+          </TouchableOpacity>
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
+            <Text style={styles.title}>ICA Records</Text>
+            <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
+              <Text style={styles.heading}> Add A Record</Text>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Observation</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  multiline
+                  placeholder="Describe the observation"
+                  value={observation}
+                  onChangeText={(text) => setObservation(text)}
+                />
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Status</Text>
+                <Picker
+                  selectedValue={status}
+                  onValueChange={(itemValue) => setStatus(itemValue)}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                >
+                  <Picker.Item label="Open" value="0" />
+                  <Picker.Item label="Closed" value="1" />
+                </Picker>
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Steps Taken</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  multiline
+                  placeholder="Describe the steps taken"
+                  value={stepsTaken}
+                  onChangeText={(text) => setStepsTaken(text)}
+                />
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Action Owner</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  placeholder="Enter the action owner"
+                  value={actionOwner}
+                  onChangeText={(text) => setActionOwner(text)}
+                />
+              </View>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "blue",
+                  padding: 10,
+                  borderRadius: 4,
+                  alignItems: "center",
+                  marginBottom: 16
+                }}
+                onPress={handleOpenModal}
+              >
+                <Text style={{ color: "white" }}>Select Images</Text>
+              </TouchableOpacity>
+              <FlatList
+                data={images}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.images} />
+                )}
+                keyExtractor={(item) => item}
+                horizontal
+              />
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "blue",
+                  padding: 8,
+                  borderRadius: 4,
+                  alignItems: "center"
+                }}
+                onPress={handleSubmit}
+              >
+                <Text style={{ color: "white" }}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.4)"
+                  }
+                ]}
+              >
+                <ActivityIndicator animating size="large" color="#fff" />
+              </View>
+            ) : null}
+            <UploadImageModal
+              visible={modalVisible}
+              onClose={handleCloseModal}
+              onRemoveImage={handleRemoveImage}
+              submit={onSubmit}
+            />
+          </View>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 OptiSafe Ltd. All rights reserved.
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+    </DrawerLayoutAndroid>
+  );
+};
+
+const styles = {
+  title: {
+    fontSize: 21,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    padding: 10,
+    textAlign: "center",
+    fontSize: 18
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
+  modalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginVertical: 20
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 10
+  },
+  images: {
+    width: 90,
+    height: 90,
+    marginVertical: 10,
+    alignSelf: "center"
+  },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
+  }
 };
 
 export default AddIcaScreen;

@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "./MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Preloader from "./Preloader";
 
 const ViewIncidentModal = () => {
   return (
@@ -55,6 +56,7 @@ const OpenIncidentsScreen = () => {
   const [incidents, setIncidents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
+  const [loading, setLoading] = useState(false);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -76,6 +78,7 @@ const OpenIncidentsScreen = () => {
 
   const fetchIncidents = async () => {
     try {
+      setLoading(true);
       const token = await AsyncStorage.getItem("token");
       const response = await ApiManager.get("/open-incidents", {
         headers: {
@@ -85,12 +88,15 @@ const OpenIncidentsScreen = () => {
 
       if (response.status === 200) {
         setIncidents(response.data.data);
+        setLoading(false);
       } else {
         // Handle error
         console.error(response.data.message);
+        setLoading(false);
       }
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   };
 
@@ -170,45 +176,58 @@ const OpenIncidentsScreen = () => {
           {/* Header */}
           <Text style={styles.title}>Open Incidents</Text>
           <View style={{ flex: 1, padding: 10 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                borderBottomWidth: 1,
-                borderBottomColor: "#ccc"
-              }}
-            >
-              <Text style={[styles.heading, styles.column]}>
-                Incident Description
-              </Text>
-              <Text style={[styles.heading, styles.column]}>Actions</Text>
-            </View>
-            {renderIncidents()}
-            {/* Pagination controls */}
-            <View style={{ flexDirection: "row", justifyContent: "center" }}>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                <Text>Previous</Text>
-              </TouchableOpacity>
-              <Text style={styles.pageIndicator}>
-                Page {currentPage} of {totalPages}
-              </Text>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                <Text>Next</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Render the preloader if loading */}
+            {loading && (
+              <View style={styles.preloaderContainer}>
+                <Preloader />
+              </View>
+            )}
+            {/* Render SORs if not loading */}
+            {!loading && (
+              <>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ccc"
+                  }}
+                >
+                  <Text style={[styles.heading, styles.column]}>
+                    Incident Description
+                  </Text>
+                  <Text style={[styles.heading, styles.column]}>Actions</Text>
+                </View>
+                {renderIncidents()}
+                {/* Pagination controls */}
+                <View
+                  style={{ flexDirection: "row", justifyContent: "center" }}
+                >
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handlePrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <Text>Previous</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.pageIndicator}>
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text>Next</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
-              © 2024 Opticom Ltd. All rights reserved.
+              © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
           </View>
         </ScrollView>
@@ -276,6 +295,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     textAlign: "center"
+  },
+  preloaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });
 

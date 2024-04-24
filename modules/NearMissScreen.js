@@ -14,6 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "./MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Preloader from "./Preloader";
+
 
 const NearMissScreen = () => {
   const [nearMisses, setNearMisses] = useState([]);
@@ -21,6 +23,8 @@ const NearMissScreen = () => {
   const drawerRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
+  const [loading, setLoading] = useState(false);
+
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -42,6 +46,7 @@ const NearMissScreen = () => {
  
   const getNearMisses = async () => {
     try {
+      setLoading(true);
       const token = await AsyncStorage.getItem("token");
       const response = await ApiManager.get("/near-miss", {
         headers: {
@@ -51,13 +56,16 @@ const NearMissScreen = () => {
 
       if (response.status === 200) {
         setNearMisses(response.data.data);
+        setLoading(false);
       }
       else {
         console.log("Error");
+        setLoading(false);
       }
     }
     catch (error) {
       console.log(error);
+      setLoading(false);
     }
   }
 
@@ -139,6 +147,15 @@ const NearMissScreen = () => {
             Near Misses
           </Text>
           <View style={{ flex: 1, padding: 10 }}>
+             {/* Render the preloader if loading */}
+             {loading && (
+              <View style={styles.preloaderContainer}>
+                <Preloader />
+              </View>
+            )}
+            {/* Render SORs if not loading */}
+            {!loading && (
+              <>
             <View
               style={{
                 flexDirection: "row",
@@ -172,12 +189,14 @@ const NearMissScreen = () => {
                 <Text>Next</Text>
               </TouchableOpacity>
             </View>
+            </>
+            )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
-              © 2024 Opticom Ltd. All rights reserved.
+              © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
           </View>
         </ScrollView>
@@ -245,6 +264,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     textAlign: "center"
+  },
+  preloaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });
 

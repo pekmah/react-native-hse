@@ -14,13 +14,16 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "./MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Preloader from "./Preloader";
 
 const LostTimeAccidentsScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const drawerRef = useRef(null);
   const [lostTimeAccidents, setLostTimeAccidents] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null); const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const [itemsPerPage] = useState(8);
 
   const toggleDrawer = () => {
@@ -43,28 +46,29 @@ const LostTimeAccidentsScreen = () => {
 
   const getLostTimeAccidents = async () => {
     try {
-        const token = await AsyncStorage.getItem("token");
-        const response = await ApiManager.get("/lost-time-accident" , {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (response.status === 200) {
-            setLostTimeAccidents(response.data.data);
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const response = await ApiManager.get("/lost-time-accident", {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-    }
-    catch (error) {
-        console.log(error);
-    }
-    };
+      });
 
-    useEffect(() => {
-        getLostTimeAccidents();
+      if (response.status === 200) {
+        setLostTimeAccidents(response.data.data);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
     }
-    , []);
+  };
 
-    const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+  useEffect(() => {
+    getLostTimeAccidents();
+  }, []);
+
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
   const totalPages = Math.ceil(lostTimeAccidents.length / itemsPerPage);
 
@@ -78,21 +82,21 @@ const LostTimeAccidentsScreen = () => {
 
   const renderLostTimeAccidents = () => {
     return lostTimeAccidents && lostTimeAccidents.length > 0 ? (
-        lostTimeAccidents
-          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-          .map((lostTimeAccident) => (
-            <View
-              key={lostTimeAccident.id}
-              style={{
-                flexDirection: "row",
-                borderBottomWidth: 1,
-                borderBottomColor: "#ccc",
-                paddingVertical: 8
-              }}
-            >
-              <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
-                {lostTimeAccident.incident_description}
-                </Text>
+      lostTimeAccidents
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((lostTimeAccident) => (
+          <View
+            key={lostTimeAccident.id}
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ccc",
+              paddingVertical: 8
+            }}
+          >
+            <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+              {lostTimeAccident.incident_description}
+            </Text>
             <TouchableOpacity
               style={{
                 backgroundColor: "#007bff",
@@ -112,10 +116,9 @@ const LostTimeAccidentsScreen = () => {
     ) : (
       <Text style={{ textAlign: "center", padding: 10 }}>
         No lost time accidents found
-        </Text>
+      </Text>
     );
-    };
-
+  };
 
   return (
     <DrawerLayoutAndroid
@@ -135,49 +138,60 @@ const LostTimeAccidentsScreen = () => {
             <Ionicons name="menu" size={24} color="black" />
           </TouchableOpacity>
           {/* Header */}
-          <Text style={styles.title}>
-            Lost Time Accidents
-            </Text>
-            <View style={{ flex: 1, padding: 10 }}>
-            <View
-              style={{
-                flexDirection: "row",
-                borderBottomWidth: 1,
-                borderBottomColor: "#ccc"
-              }}
-            >
-              <Text style={[styles.heading, styles.column]}>
-                Incident Description
-              </Text>
-              <Text style={[styles.heading, styles.column]}>Actions</Text>
-            </View>
-            {renderLostTimeAccidents()}
-             {/* Pagination controls */}
-             <View style={{ flexDirection: "row", justifyContent: "center" }}>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                <Text>Previous</Text>
-              </TouchableOpacity>
-              <Text style={styles.pageIndicator}>
-                Page {currentPage} of {totalPages}
-              </Text>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                <Text>Next</Text>
-              </TouchableOpacity>
-            </View>
+          <Text style={styles.title}>Lost Time Accidents</Text>
+          <View style={{ flex: 1, padding: 10 }}>
+            {/* Render the preloader if loading */}
+            {loading && (
+              <View style={styles.preloaderContainer}>
+                <Preloader />
+              </View>
+            )}
+            {/* Render SORs if not loading */}
+            {!loading && (
+              <>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ccc"
+                  }}
+                >
+                  <Text style={[styles.heading, styles.column]}>
+                    Incident Description
+                  </Text>
+                  <Text style={[styles.heading, styles.column]}>Actions</Text>
+                </View>
+                {renderLostTimeAccidents()}
+                {/* Pagination controls */}
+                <View
+                  style={{ flexDirection: "row", justifyContent: "center" }}
+                >
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handlePrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <Text>Previous</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.pageIndicator}>
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text>Next</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
-              © 2024 Opticom Ltd. All rights reserved.
+              © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
           </View>
         </ScrollView>
@@ -245,6 +259,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     textAlign: "center"
+  },
+  preloaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });
 

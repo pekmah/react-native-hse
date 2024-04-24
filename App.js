@@ -8,8 +8,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  StyleSheet,
-  ActivityIndicator
+  StyleSheet
 } from "react-native";
 import DashboardScreen from "./modules/DashboardScreen";
 import AddIcaScreen from "./modules/AddIcaScreen";
@@ -32,15 +31,33 @@ import SuggestedImprovementsScreen from "./modules/SuggestedImprovementsScreen";
 import SupervisorScreen from "./modules/SupervisorScreen";
 import TasksScreen from "./modules/TasksScreen";
 import ViewIcaScreen from "./modules/ViewIcaScreen";
+import AddEnvironmentalConcerns from "./modules/AddEnvironmentalConcerns";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ApiManager from "./api/ApiManager";
+import Preloader from "./modules/Preloader";
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#fbf7fc"
+            
+          },
+          headerTintColor: "#fff",
+          headerTitleAlign: "center",
+          headerTitle: "OptiSafe Health And Safety",
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: 20,
+            color: "#007bff"
+          }
+        }}
+      >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="Supervisor" component={SupervisorScreen} />
@@ -81,6 +98,10 @@ export default function App() {
         <Stack.Screen name="Add Record" component={AddRecordScreen} />
         <Stack.Screen name="Add Ica" component={AddIcaScreen} />
         <Stack.Screen name="View Ica" component={ViewIcaScreen} />
+        <Stack.Screen
+          name="Add Environment Concern"
+          component={AddEnvironmentalConcerns}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -146,25 +167,17 @@ const LoginScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {isLoading ? ( // Render preloader if isLoading is true
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "rgba(0,0,0,0.4)"
-            }
-          ]}
-        >
-          <ActivityIndicator animating size="large" color="#fff" />
+        <View style={[styles.blinkingImageContainer, StyleSheet.absoluteFill]}>
+          <Preloader />
         </View>
       ) : (
         <>
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require("./images/Opticom Logo.png")}
+              source={require("./images/OptiSafe Logo -01.png")}
               style={styles.logo}
+              resizeMode="center"
             />
           </View>
 
@@ -308,5 +321,10 @@ const styles = StyleSheet.create({
     color: "green",
     textAlign: "center",
     marginTop: 10
+  },
+  blinkingImageContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff"
   }
 });

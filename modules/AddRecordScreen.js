@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  DrawerLayoutAndroid,
   StyleSheet,
   Button,
   ActivityIndicator,
@@ -19,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { FlatList } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "./MenuScreen";
 import config from "../config/config";
 
 let images = [];
@@ -50,8 +52,6 @@ const UploadImageModal = ({ visible, onClose, onRemoveImage }) => {
 
     // loadImages();
   }, []);
-
-
 
   const selectImage = async (useLibrary) => {
     let result;
@@ -144,6 +144,8 @@ const UploadImageModal = ({ visible, onClose, onRemoveImage }) => {
 };
 
 const AddRecordScreen = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerRef = useRef(null);
   const [observation, setObservation] = useState("");
   const [status, setStatus] = useState("0");
   const [stepsTaken, setStepsTaken] = useState("");
@@ -195,7 +197,7 @@ const AddRecordScreen = () => {
       Alert.alert("Error", "Please fill all fields.");
       return;
     }
-  setLoading(true);
+    setLoading(true);
 
     const formData = new FormData();
     console.log("formData before", formData);
@@ -210,7 +212,7 @@ const AddRecordScreen = () => {
     for (let i = 0; i < images.length; i++) {
       const image = {
         uri: images[i],
-        name: Date.now()  + i +  "." + images[i].split(".").pop(),
+        name: Date.now() + i + "." + images[i].split(".").pop(),
         type: `image/${images[i].split(".").pop()}` // Ensure correct content type
       };
       formData.append("images[]", image); // Use key with square brackets
@@ -274,148 +276,204 @@ const AddRecordScreen = () => {
     }
   };
 
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+    if (!isDrawerOpen) {
+      drawerRef.current.openDrawer();
+    } else {
+      drawerRef.current.closeDrawer();
+    }
+  };
+
+  const handleOutsideTouch = () => {
+    closeDrawer(); // Close the drawer when touched outside
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    drawerRef.current.closeDrawer();
+  };
+
+  const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
   return (
-    <ScrollView style={{ padding: 10 }}>
-      <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
-        <Text style={{ fontWeight: "bold", marginBottom: 16 }}>
-          Add Safety Observation Record
-        </Text>
-        <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Observation</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              placeholder="Enter Observation"
-              value={observation}
-              onChangeText={(text) => setObservation(text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Status</Text>
-            <Picker
-              selectedValue={status}
-              onValueChange={(itemValue) => setStatus(itemValue)}
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-            >
-              <Picker.Item label="Open" value="0" />
-              <Picker.Item label="Closed" value="1" />
-            </Picker>
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Steps Taken</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              multiline
-              placeholder="Enter Steps Taken"
-              value={stepsTaken}
-              onChangeText={(text) => setStepsTaken(text)}
-            />
-          </View>
-          <View style={{ marginBottom: 16 }}>
-            <Text>Action Owner</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-              placeholder="Enter Action Owner"
-              value={actionOwner}
-              onChangeText={(text) => setActionOwner(text)}
-            />
-          </View>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "blue",
-              padding: 10,
-              borderRadius: 4,
-              alignItems: "center",
-              marginBottom: 16
-            }}
-            onPress={handleOpenModal}
-          >
-            <Text style={{ color: "white" }}>Select Images</Text>
+    <DrawerLayoutAndroid
+      ref={drawerRef}
+      drawerWidth={200}
+      drawerPosition="left"
+      renderNavigationView={navigationView}
+    >
+      <View style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          onTouchStart={handleOutsideTouch}
+          onScrollBeginDrag={handleOutsideTouch}
+        >
+          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+            <Ionicons name="menu" size={24} color="black" />
           </TouchableOpacity>
-          <FlatList
-            data={images}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item }} style={styles.images} />
-            )}
-            keyExtractor={(item) => item}
-            horizontal
-          />
-          <View style={{ marginBottom: 16 }}>
-            <Text>Record Type</Text>
-            <Picker
-              selectedValue={selectedType}
-              onValueChange={(itemValue) => setSelectedType(itemValue)}
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 4,
-                padding: 8
-              }}
-            >
-              <Picker.Item label="Select Record Type" value="" />
-              {Object.entries(sorTypes).map(([id, type]) => (
-                <Picker.Item key={id} label={type} value={id} />
-              ))}
-            </Picker>
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
+            <Text style={styles.title}>Add Safety Observation Record</Text>
+            <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Observation</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  placeholder="Enter Observation"
+                  value={observation}
+                  onChangeText={(text) => setObservation(text)}
+                />
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Status</Text>
+                <Picker
+                  selectedValue={status}
+                  onValueChange={(itemValue) => setStatus(itemValue)}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                >
+                  <Picker.Item label="Open" value="0" />
+                  <Picker.Item label="Closed" value="1" />
+                </Picker>
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Steps Taken</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  multiline
+                  placeholder="Enter Steps Taken"
+                  value={stepsTaken}
+                  onChangeText={(text) => setStepsTaken(text)}
+                />
+              </View>
+              <View style={{ marginBottom: 16 }}>
+                <Text>Action Owner</Text>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                  placeholder="Enter Action Owner"
+                  value={actionOwner}
+                  onChangeText={(text) => setActionOwner(text)}
+                />
+              </View>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "blue",
+                  padding: 10,
+                  borderRadius: 4,
+                  alignItems: "center",
+                  marginBottom: 16
+                }}
+                onPress={handleOpenModal}
+              >
+                <Text style={{ color: "white" }}>Select Images</Text>
+              </TouchableOpacity>
+              <FlatList
+                data={images}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.images} />
+                )}
+                keyExtractor={(item) => item}
+                horizontal
+              />
+              <View style={{ marginBottom: 16 }}>
+                <Text>Record Type</Text>
+                <Picker
+                  selectedValue={selectedType}
+                  onValueChange={(itemValue) => setSelectedType(itemValue)}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+                    padding: 8
+                  }}
+                >
+                  <Picker.Item label="Select Record Type" value="" />
+                  {Object.entries(sorTypes).map(([id, type]) => (
+                    <Picker.Item key={id} label={type} value={id} />
+                  ))}
+                </Picker>
+              </View>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "green",
+                  padding: 10,
+                  borderRadius: 4,
+                  alignItems: "center"
+                }}
+                onPress={handleSubmit}
+              >
+                <Text style={{ color: "white" }}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.4)"
+                  }
+                ]}
+              >
+                <ActivityIndicator animating size="large" color="#fff" />
+              </View>
+            ) : null}
+            <UploadImageModal
+              visible={modalVisible}
+              onClose={handleCloseModal}
+              onRemoveImage={handleRemoveImage}
+              submit={onSubmit}
+            />
           </View>
-          <TouchableOpacity
-            style={{
-              backgroundColor: "green",
-              padding: 10,
-              borderRadius: 4,
-              alignItems: "center"
-            }}
-            onPress={handleSubmit}
-          >
-            <Text style={{ color: "white" }}>Submit</Text>
-          </TouchableOpacity>
-        </View>
-        {isLoading ? (
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.4)"
-              }
-            ]}
-          >
-            <ActivityIndicator animating size="large" color="#fff" />
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
+            <Text style={styles.footerText}>
+              © 2024 OptiSafe Ltd. All rights reserved.
+            </Text>
           </View>
-        ) : null}
-        <UploadImageModal
-          visible={modalVisible}
-          onClose={handleCloseModal}
-          onRemoveImage={handleRemoveImage}
-          submit={onSubmit}
-        />
+        </ScrollView>
       </View>
-    </ScrollView>
+    </DrawerLayoutAndroid>
   );
 };
 
 const styles = {
+  title: {
+    fontSize: 21,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
+    fontWeight: "bold",
+    padding: 10,
+    textAlign: "center"
+  },
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
+  },
   modalContainer: {
     flexDirection: "row",
     justifyContent: "space-evenly",
@@ -432,6 +490,20 @@ const styles = {
     height: 90,
     marginVertical: 10,
     alignSelf: "center"
+  },
+  cardFooter: {
+    fontSize: 14,
+    color: "#666"
+  },
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
+    textAlign: "center"
   }
 };
 

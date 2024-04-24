@@ -12,9 +12,14 @@ import { useNavigation } from "@react-navigation/native";
 const MenuItem = ({ title, onPress, isActive }) => {
   return (
     <TouchableOpacity
-     style={styles.menuItem}
-     onPress={onPress}>
-      <Text style={styles.menuItemText}>{title}</Text>
+      style={[styles.menuItem, isActive && styles.activeMenuItem]}
+      onPress={onPress}
+    >
+      <Text
+        style={[styles.menuItemText, isActive && styles.activeMenuItemText]}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -29,32 +34,22 @@ const SubMenuItem = ({ title, onPress }) => {
 
 const VerticalNav = () => {
   const navigation = useNavigation();
-  const [showSorSubmenu, setShowSorSubmenu] = useState(false);
-  const [showIncidentSubmenu, setShowIncidentSubmenu] = useState(false);
-  const [showImediateCorrectiveAction, setShowImediateCorrectiveAction] =
-    useState(false);
+  const [activeMenuItem, setActiveMenuItem] = useState(null);
+  const [showSubmenu, setShowSubmenu] = useState({
+    SORs: false,
+    IncidentManager: false,
+    ImmediateCorrectiveAction: false,
+    EnvironmentalConcerns: false
+  });
 
   const handleMenuItemPress = (routeName) => {
+    setActiveMenuItem(routeName);
     navigation.navigate(routeName);
   };
 
-  const handleSorSubmenuPress = (action) => {
-    // Implement navigation logic for SOR submenu items
-    navigation.navigate(action);
-
+  const handleSubmenuPress = (submenu) => {
+    setShowSubmenu({ ...showSubmenu, [submenu]: !showSubmenu[submenu] });
   };
-
-  const handleIncidentSubmenuPress = (action) => {
-    // Implement navigation logic for Incident Manager submenu items
-    navigation.navigate(action);
-  };
-
-  const handleImediateCorrectiveActionSubmenuPress = (action) => {
-    // Implement navigation logic for Incident Manager submenu items
-    navigation.navigate(action);
-  };
-
-
 
   return (
     <View style={styles.container}>
@@ -62,125 +57,142 @@ const VerticalNav = () => {
         {/* Brand */}
         <View style={styles.brand}>
           <Image
-            source={require("../images/Opticom Logo.png")}
+            source={require("../images/OptiSafe Logo -01.png")}
             style={styles.brandLogo}
+            resizeMode="center"
           />
-          <Text style={styles.brandText}>Opticom HSE</Text>
         </View>
         {/* Menu Items */}
         <ScrollView style={styles.menuItems}>
           <MenuItem
             title="Dashboard"
             onPress={() => handleMenuItemPress("Dashboard")}
+            isActive={activeMenuItem === "Dashboard"}
           />
           <MenuItem
             title="Supervisor"
             onPress={() => handleMenuItemPress("Supervisor")}
+            isActive={activeMenuItem === "Supervisor"}
           />
           <MenuItem
             title="Personnel"
             onPress={() => handleMenuItemPress("Personnel")}
+            isActive={activeMenuItem === "Personnel"}
           />
           <MenuItem
             title="SOR's"
-            onPress={() => setShowSorSubmenu(!showSorSubmenu)}
+            onPress={() => handleSubmenuPress("SORs")}
+            isActive={showSubmenu.SORs}
           />
-          {showSorSubmenu && (
+          {showSubmenu.SORs && (
             <View style={styles.submenu}>
               <SubMenuItem
                 title="Add Record"
-                onPress={() => handleSorSubmenuPress("Add Record")}
+                onPress={() => handleMenuItemPress("Add Record")}
               />
               <SubMenuItem
                 title="Open SOR's"
-                onPress={() => handleSorSubmenuPress("Open Sors")}
+                onPress={() => handleMenuItemPress("Open SOR's")}
               />
               <SubMenuItem
                 title="Reported Hazards"
-                onPress={() => handleSorSubmenuPress("Reported Hazards")}
+                onPress={() => handleMenuItemPress("Reported Hazards")}
               />
               <SubMenuItem
                 title="Suggested Improvements"
-                onPress={() => handleSorSubmenuPress("Suggested Improvements")}
+                onPress={() => handleMenuItemPress("Suggested Improvements")}
               />
               <SubMenuItem
                 title="Good Practises"
-                onPress={() => handleSorSubmenuPress("Good Practises")}
+                onPress={() => handleMenuItemPress("Good Practises")}
               />
               <SubMenuItem
-                title="Bad Practises"
-                onPress={() => handleSorSubmenuPress("Bad Practises")}
+                title="Bad Practices"
+                onPress={() => handleMenuItemPress("Bad Practises")}
               />
             </View>
           )}
           <MenuItem
             title="Incident Manager"
-            onPress={() => setShowIncidentSubmenu(!showIncidentSubmenu)}
+            onPress={() => handleSubmenuPress("IncidentManager")}
+            isActive={showSubmenu.IncidentManager}
           />
-          {showIncidentSubmenu && (
+          {showSubmenu.IncidentManager && (
             <View style={styles.submenu}>
               <SubMenuItem
                 title="Add Incident"
-                onPress={() => handleIncidentSubmenuPress("Add Incident")}
+                onPress={() => handleMenuItemPress("Add Incident")}
               />
               <SubMenuItem
                 title="Open Incidents"
-                onPress={() => handleIncidentSubmenuPress("Open Incidents")}
+                onPress={() => handleMenuItemPress("Open Incidents")}
               />
               <SubMenuItem
-                title="Near Miss"
-                onPress={() => handleIncidentSubmenuPress("Near Miss")}
+                title="Near Misses"
+                onPress={() => handleMenuItemPress("Near Miss")}
               />
               <SubMenuItem
-                title="First Aid Case"
-                onPress={() => handleIncidentSubmenuPress("First Aid Case")}
+                title="First Aid Cases"
+                onPress={() => handleMenuItemPress("First Aid Case")}
               />
               <SubMenuItem
-                title="Medical Treated Case"
-                onPress={() => handleIncidentSubmenuPress("Medical Treatment Case")}
+                title="Medical Treatment Cases"
+                onPress={() => handleMenuItemPress("Medical Treatment Case")}
               />
               <SubMenuItem
                 title="Lost Time Accidents"
-                onPress={() => handleIncidentSubmenuPress("Lost Time Accident")}
+                onPress={() => handleMenuItemPress("Lost Time Accident")}
               />
               <SubMenuItem
                 title="SIF"
-                onPress={() => handleIncidentSubmenuPress("SIF")}
+                onPress={() => handleMenuItemPress("SIF")}
               />
             </View>
           )}
           <MenuItem
             title="Immediate Corrective Action"
-            onPress={() =>
-              setShowImediateCorrectiveAction(!showImediateCorrectiveAction)
-            }
+            onPress={() => handleSubmenuPress("ImmediateCorrectiveAction")}
+            isActive={showSubmenu.ImmediateCorrectiveAction}
           />
-          {showImediateCorrectiveAction && (
+          {showSubmenu.ImmediateCorrectiveAction && (
             <View style={styles.submenu}>
               <SubMenuItem
-                title="Add ICA's"
-                onPress={() => handleImediateCorrectiveActionSubmenuPress("Add Ica")}
+                title="Add ICAs"
+                onPress={() => handleMenuItemPress("Add Ica")}
               />
               <SubMenuItem
-                title="View ICA's"
-                onPress={() =>
-                  handleImediateCorrectiveActionSubmenuPress("View Ica")
-                }
+                title="View ICAs"
+                onPress={() => handleMenuItemPress("View Ica")}
               />
             </View>
           )}
-            <MenuItem
-                title="Permits Applicable"
-                onPress={() => handleMenuItemPress("Permits Applicable")}
-            />
+          <MenuItem
+            title="Permits Applicable"
+            onPress={() => handleMenuItemPress("Permits Applicable")}
+            isActive={activeMenuItem === "Permits Applicable"}
+          />
           <MenuItem
             title="Tasks"
             onPress={() => handleMenuItemPress("Tasks")}
+            isActive={activeMenuItem === "Tasks"}
           />
-            <MenuItem
+          <MenuItem
             title="Environmental Concerns"
-            onPress={() => handleMenuItemPress("Environmental Concerns")}
-            />
+            onPress={() => handleSubmenuPress("EnvironmentalConcerns")}
+            isActive={showSubmenu.EnvironmentalConcerns}
+          />
+          {showSubmenu.EnvironmentalConcerns && (
+            <View style={styles.submenu}>
+              <SubMenuItem
+                title="Add Environmental Concern"
+                onPress={() => handleMenuItemPress("Add Environment Concern")}
+              />
+              <SubMenuItem
+                title="View Environmental Concerns"
+                onPress={() => handleMenuItemPress("View Environment Concerns")}
+              />
+            </View>
+          )}
         </ScrollView>
       </ScrollView>
     </View>
@@ -198,7 +210,6 @@ const styles = StyleSheet.create({
   brand: {
     flexDirection: "column",
     alignItems: "center",
-    paddingVertical: 20,
     justifyContent: "space-evenly",
     borderBottomWidth: 1,
     borderBottomColor: "#ccc"
@@ -209,13 +220,13 @@ const styles = StyleSheet.create({
     marginLeft: -70
   },
   brandLogo: {
-    width: 50,
-    height: 50,
+    width: 100,
+    height: 100,
     borderRadius: 50,
     marginLeft: -70
   },
   menuItems: {
-    marginTop: 20
+    marginTop: 2
   },
   menuItem: {
     paddingVertical: 15,
@@ -224,8 +235,15 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ccc",
     fontSize: 16
   },
+  activeMenuItem: {
+    backgroundColor: "#ddd"
+  },
   menuItemText: {
     fontSize: 16
+  },
+  activeMenuItemText: {
+    fontWeight: "bold",
+    color: "#007bff"
   },
   submenu: {
     marginLeft: 20

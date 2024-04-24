@@ -188,9 +188,9 @@ const DashboardScreen = () => {
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
-              © 2024 Opticom Ltd. All rights reserved.
+              © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
           </View>
         </ScrollView>

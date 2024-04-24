@@ -8,59 +8,26 @@ import {
   TextInput,
   Button,
   Dimensions,
-  DrawerLayoutAndroid,
   StyleSheet,
-  ActivityIndicator
+  DrawerLayoutAndroid
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "./MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Preloader from "./Preloader";
 
 const TasksScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [tasks, setTasks] = useState([]); // State to store tasks
   const [isLoading, setIsLoading] = useState(true); // State to track loading state
-  const [page, setPage] = useState(1); // State to track current page
-  const [hasMore, setHasMore] = useState(true); // State to track if there are more tasks to load
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8);
   const drawerRef = useRef(null);
-
-  useEffect(() => {
-    // Fetch tasks when component mounts
-    fetchTasks();
-  }, []);
-
-  const fetchTasks = async () => {
-    try {
-      // Retrieve token from local storage
-      const token = await AsyncStorage.getItem("token");
-
-      // Fetch tasks for the current page
-      const response = await ApiManager.get(`/tasks?page=${page}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      // Check if there are more tasks
-      const newTasks = response.data.data;
-      if (newTasks.length === 0) {
-        setHasMore(false);
-      }
-
-      // Update tasks state
-      setTasks([...tasks, ...newTasks]);
-      setIsLoading(false); // Set loading state to false when tasks are fetched
-    } catch (error) {
-      console.log(error);
-      console.log(error.response);
-    }
-  };
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
     if (!isDrawerOpen) {
-      console.log(isDrawerOpen);
       drawerRef.current.openDrawer();
     } else {
       drawerRef.current.closeDrawer();
@@ -68,9 +35,7 @@ const TasksScreen = () => {
   };
 
   const handleOutsideTouch = () => {
-    console.log(isDrawerOpen);
-    console.log("outside");
-    closeDrawer();
+    closeDrawer(); // Close the drawer when touched outside
   };
 
   const closeDrawer = () => {
@@ -78,23 +43,87 @@ const TasksScreen = () => {
     drawerRef.current.closeDrawer();
   };
 
-  const handleScrollEnd = ({ nativeEvent }) => {
-    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-    const paddingToBottom = 20;
-    if (
-      layoutMeasurement.height + contentOffset.y >=
-      contentSize.height - paddingToBottom
-    ) {
-      // Load more tasks when reaching the end of the list
-      if (hasMore) {
-        setPage(page + 1);
-        fetchTasks();
+  useEffect(() => {
+    // Fetch tasks when component mounts
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      // Retrieve token from local storage
+      const token = await AsyncStorage.getItem("token");
+
+      // Fetch tasks for the current page
+      const response = await ApiManager.get(`/tasks`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Handle the response
+      if (response.status === 200) {
+        // Set the tasks
+        setTasks(response.data.data);
+        // Set loading to false
+        setIsLoading(false);
+      } else {
+        // Handle error
+        console.error(response.data);
       }
+    } catch (error) {
+      setIsLoading(false);
+      console.error(error);
     }
   };
 
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
+  const totalPages = Math.ceil(tasks.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage(currentPage - 1);
+  };
+
+  const renderTasks = () => {
+    return tasks
+      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+      .map((task) => (
+        <View
+          key={task.id}
+          style={{
+            flexDirection: "row",
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            paddingVertical: 8
+          }}
+        >
+          <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+            {task.description}
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#007bff",
+              padding: 4,
+              borderRadius: 5,
+              marginRight: 16,
+              justifyContent: "center",
+              alignItems: "center",
+              height: 30
+            }}
+            onPress={() => {
+              // Handle view SOR
+            }}
+          >
+            <Text style={{ color: "#fff" }}>View</Text>
+          </TouchableOpacity>
+        </View>
+      ));
+  };
   return (
     <DrawerLayoutAndroid
       ref={drawerRef}
@@ -105,118 +134,120 @@ const TasksScreen = () => {
       <View style={{ flex: 1 }}>
         {/* Wrap the content in a ScrollView */}
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={{ flexGrow: 1 }}
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
-          onScrollEndDrag={handleScrollEnd} // Handle scroll end to detect if reached end of list
-          onMomentumScrollEnd={handleScrollEnd} // Handle momentum scroll end to detect if reached end of list
         >
           <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
           </TouchableOpacity>
-          {/* Render preloader if loading */}
-          {isLoading && (
-            <ActivityIndicator
-              size="large"
-              color="#0000ff"
-              position="absolute"
-              top="50%"
-              left="50%"
-            />
-          )}
-          {/* Horizontal ScrollView for paging */}
-   
-            <View style={styles.pageContainer}>
-              <Text style={styles.pageHeader}>Tasks</Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#ccc"
-                }}
-              >
-                <Text style={[styles.heading, styles.column]}>Title</Text>
-                <Text style={[styles.heading, styles.column]}>Due Date</Text>
-                <Text style={[styles.heading, styles.column]}>Actions</Text>
+          {/* Header */}
+          <Text style={styles.title}>Tasks</Text>
+          <View style={{ flex: 1, padding: 10 }}>
+            {/* Render the preloader if loading */}
+            {isLoading && (
+              <View style={styles.preloaderContainer}>
+                <Preloader />
               </View>
-              {tasks.map((task, index) => (
+            )}
+            {!isLoading && (
+              <>
                 <View
-                  key={task.id + index}
                   style={{
                     flexDirection: "row",
                     borderBottomWidth: 1,
-                    borderBottomColor: "#ccc",
-                    alignItems: "center"
+                    borderBottomColor: "#ccc"
                   }}
                 >
-                  <Text style={[styles.column, { flex: 2, marginRight: 16 }]}> {task.title}</Text>
-                  <Text style={[styles.column, { flex: 1, marginRight: 16 }]}> {task.to}</Text>
+                  <Text style={[styles.heading, styles.column]}>
+                    Observation
+                  </Text>
+                  <Text style={[styles.heading, styles.column]}>Action</Text>
+                </View>
+                {renderTasks()}
+                {/* Pagination controls */}
+                <View
+                  style={{ flexDirection: "row", justifyContent: "center" }}
+                >
                   <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: "#007bff" }]}
-                    onPress={() => {}}
+                    style={styles.paginationButton}
+                    onPress={handlePrevPage}
+                    disabled={currentPage === 1}
                   >
-                    <Text style={styles.actionButtonText}>View</Text>
+                    <Text>Previous</Text>
                   </TouchableOpacity>
+                  <Text style={styles.pageIndicator}>
+                    Page {currentPage} of {totalPages}
+                  </Text>
                   <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: "#dc3545" }]}
-                    onPress={() => {}}
+                    style={styles.paginationButton}
+                    onPress={handleNextPage}
+                    disabled={currentPage === totalPages}
                   >
-                    <Text style={styles.actionButtonText}>Delete</Text>
+                    <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
-              ))}
-            </View>
-          </ScrollView>
+              </>
+            )}
+          </View>
+          {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Opticom Health & Safety</Text>
+            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
-              © 2024 Opticom Ltd. All rights reserved.
+              © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
           </View>
+        </ScrollView>
       </View>
     </DrawerLayoutAndroid>
   );
 };
 
-const styles = {
-  scrollViewContainer: {
-    flexGrow: 1
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10
   },
-  horizontalScrollView: {
-    flexGrow: 1
+  menu: {
+    position: "absolute",
+    top: 10,
+    left: 10
   },
-  pageContainer: {
-    width: Dimensions.get("window").width, // Set page width to screen width
-    paddingHorizontal: 10,
-    paddingTop: 20
+  addButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
   },
-  pageHeader: {
-    fontSize: 18,
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginVertical: 10
+  },
+  heading: {
     fontWeight: "bold",
-    marginBottom: 10,
+    padding: 10,
     textAlign: "center"
   },
-  taskCard: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10
+  column: {
+    flex: 1,
+    padding: 10
   },
-  taskTitle: {
-    marginBottom: 5,
-    fontWeight: "bold"
+  text: {
+    textAlign: "center"
   },
-  actionButton: {
-    padding: 4,
-    borderRadius: 4,
-    marginLeft: 8,
-    justifyContent: "center",
-    alignItems: "center"
+  paginationButton: {
+    padding: 8,
+    marginHorizontal: 5,
+    backgroundColor: "#007bff",
+    borderRadius: 5
   },
-  actionButtonText: {
-    color: "#fff",
-    paddingHorizontal: 8
+  pageIndicator: {
+    padding: 8,
+    marginHorizontal: 5,
+    textAlign: "center"
   },
   footer: {
     backgroundColor: "#fff",
@@ -228,14 +259,11 @@ const styles = {
     color: "#666",
     textAlign: "center"
   },
-  column: {
-    marginRight: 16
-  },
-  heading: {
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 8
+  preloaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
-};
+});
 
 export default TasksScreen;
