@@ -1,6 +1,12 @@
 
 const config = {
-  apiBaseUrl: "https://mbank.metaspace.co.ke/api/v1"
+  apiBaseUrl: "https://hse.optitech.co.ke/api/v1",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  responseType: "json",
+  withCredentials: true,
+  media_url: "https://hse.optitech.co.ke/",
 };
 
 export default config;

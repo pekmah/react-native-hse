@@ -50,7 +50,7 @@ export default function App() {
           },
           headerTintColor: "#fff",
           headerTitleAlign: "center",
-          headerTitle: "OptiSafe Health And Safety",
+          headerTitle: "Quality Health And Safety",
           headerTitleStyle: {
             fontWeight: "bold",
             fontSize: 20,
@@ -102,6 +102,7 @@ export default function App() {
           name="Add Environment Concern"
           component={AddEnvironmentalConcerns}
         />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

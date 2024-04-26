@@ -8,13 +8,109 @@ import {
   TextInput,
   DrawerLayoutAndroid,
   StyleSheet,
-  Button
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "./MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Preloader from "./Preloader";
+import config from "../config/config";
+
+const ViewBadPracticeModal = ({ badPractice, onClose, visible }) => {
+  if (!visible || !badPractice) {
+    return null; // If modal is not visible or badPractice data is not provided, don't render anything
+  }
+
+  const cleanMediaUrl = (url) => {
+    return url.replace(
+      /^http:\/\/localhost\/storage\//,
+      config.media_url + "/storage/"
+    );
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View Bad Practice</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Observation:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={
+                  badPractice.observation || "No observation data available"
+                }
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Steps Taken:</Text>
+              {badPractice.steps_taken?.map((step, index) => (
+                <TextInput
+                  key={index}
+                  style={styles.textInput}
+                  value={step || "No steps taken data available"}
+                  editable={false}
+                  multiline={true}
+                />
+              ))}
+              <Text style={styles.label}>Date:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={badPractice.date || "No date data available"}
+                editable={false}
+              />
+              <Text style={styles.label}>Status:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={
+                  badPractice.status === 0
+                    ? "Open"
+                    : "Closed" || "No status data available"
+                }
+                editable={false}
+              />
+              {badPractice.media?.length > 0 && (
+                <View style={styles.mediaContainer}>
+                  <Text style={styles.mediaLabel}>Media:</Text>
+                  {badPractice.media.map((item, index) => (
+                    <View key={index} style={styles.mediaItem}>
+                      <Image
+                        source={{ uri: cleanMediaUrl(item.original_url) }}
+                        style={styles.mediaImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.mediaText}>
+                        Media {item.file_name}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </Modal>
+  );
+};
 
 const BadPractices = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -23,6 +119,8 @@ const BadPractices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
   const [loading, setLoading] = useState(false);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [selectedBadPractice, setSelectedBadPractice] = useState(null);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -79,14 +177,19 @@ const BadPractices = () => {
     setCurrentPage(currentPage - 1);
   };
 
+  const handleViewBadPractice = (badPractice) => {
+    setSelectedBadPractice(badPractice);
+    setIsViewModalVisible(true);
+  };
+
   const renderBadPractices = () => {
     return (
       badPractices &&
       badPractices
         .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-        .map((goodPractice) => (
+        .map((badPractice) => (
           <View
-            key={goodPractice.id}
+            key={badPractice.id}
             style={{
               flexDirection: "row",
               borderBottomWidth: 1,
@@ -95,7 +198,7 @@ const BadPractices = () => {
             }}
           >
             <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
-              {goodPractice.observation}
+              {badPractice.observation}
             </Text>
             <TouchableOpacity
               style={{
@@ -107,7 +210,7 @@ const BadPractices = () => {
                 alignItems: "center",
                 height: 30
               }}
-              onPress={() => {}}
+              onPress={() => handleViewBadPractice(badPractice)}
             >
               <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
@@ -180,6 +283,12 @@ const BadPractices = () => {
                     <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
+                {/* View Bad Practice Modal */}
+                <ViewBadPracticeModal
+                  badPractice={selectedBadPractice}
+                  onClose={() => setIsViewModalVisible(false)}
+                  visible={isViewModalVisible}
+                />
               </>
             )}
           </View>
@@ -256,6 +365,63 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     textAlign: "center"
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#f41313"
+  },
+  modalBody: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  textInput: {
+    padding: 10,
+    backgroundColor: "#eee",
+    color: "#000",
+    borderRadius: 5,
+    marginBottom: 15
+  },
+  mediaContainer: {
+    marginBottom: 15
+  },
+  mediaLabel: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaImage: {
+    //calculate the width of the image based on the screen width
+    width: "100%",
+    height: 200,
+    marginBottom: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end"
   }
 });
 

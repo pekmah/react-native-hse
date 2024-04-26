@@ -92,7 +92,7 @@ const VerticalNav = () => {
               />
               <SubMenuItem
                 title="Open SOR's"
-                onPress={() => handleMenuItemPress("Open SOR's")}
+                onPress={() => handleMenuItemPress("Open Sors")}
               />
               <SubMenuItem
                 title="Reported Hazards"
@@ -189,7 +189,7 @@ const VerticalNav = () => {
               />
               <SubMenuItem
                 title="View Environmental Concerns"
-                onPress={() => handleMenuItemPress("View Environment Concerns")}
+                onPress={() => handleMenuItemPress("Environmental Concerns")}
               />
             </View>
           )}
