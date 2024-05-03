@@ -21,7 +21,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { Ionicons } from "@expo/vector-icons";
 import config from "../config/config";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
+import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
+
 
 let images = [];
 
@@ -308,162 +310,163 @@ const AddIncidentScreen = () => {
   };
 
   return (
-    <DrawerLayoutAndroid
-      ref={drawerRef}
-      drawerWidth={200}
-      drawerPosition="left"
-      renderNavigationView={navigationView}
-    >
-      <View style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          onTouchStart={handleOutsideTouch}
-          onScrollBeginDrag={handleOutsideTouch}
-        >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+    <KeyboardAvoidingWrapper>
+      <DrawerLayoutAndroid
+        ref={drawerRef}
+        drawerWidth={200}
+        drawerPosition="left"
+        renderNavigationView={navigationView}
+      >
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            onTouchStart={handleOutsideTouch}
+            onScrollBeginDrag={handleOutsideTouch}
+          >
+            {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
-          <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
-          <Text style={styles.title}>
-              Incident Records
-            </Text>
+          </TouchableOpacity> */}
+            <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
+              <Text style={styles.title}>
+                Incident Records
+              </Text>
 
-            <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
-              <Text style={styles.heading}>Add An Incident</Text>
-              <View
-                style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}
-              >
-                <View style={{ marginBottom: 16 }}>
-                  <Text>Incident Description</Text>
-                  <TextInput
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      borderRadius: 4,
-                      padding: 8
-                    }}
-                    multiline
-                    placeholder="This ...."
-                    value={incidentDescription}
-                    onChangeText={(text) => setIncidentDescription(text)}
-                  />
-                </View>
-                <View style={{ marginBottom: 16 }}>
-                  <Text>Investigation Status</Text>
-                  <Picker
-                    selectedValue={investigationStatus}
-                    onValueChange={(itemValue) =>
-                      setInvestigationStatus(itemValue)
-                    }
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      borderRadius: 4,
-                      padding: 8
-                    }}
-                  >
-                    <Picker.Item label="Open" value="open" />
-                    <Picker.Item label="Closed" value="closed" />
-                  </Picker>
-                </View>
-                <View style={{ marginBottom: 16 }}>
-                  <Text>Incident Status</Text>
-                  <Picker
-                    selectedValue={incidentStatus}
-                    onValueChange={(itemValue) => setIncidentStatus(itemValue)}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      borderRadius: 4,
-                      padding: 8
-                    }}
-                  >
-                    <Picker.Item label="Yes" value="yes" />
-                    <Picker.Item label="No" value="no" />
-                  </Picker>
-                </View>
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "blue",
-                    padding: 10,
-                    borderRadius: 4,
-                    alignItems: "center",
-                    marginBottom: 16
-                  }}
-                  onPress={handleOpenModal}
-                >
-                  <Text style={{ color: "white" }}>Select Images</Text>
-                </TouchableOpacity>
-                <FlatList
-                  data={images}
-                  renderItem={({ item }) => (
-                    <Image source={{ uri: item }} style={styles.images} />
-                  )}
-                  keyExtractor={(item) => item}
-                  horizontal
-                />
-                <View style={{ marginBottom: 16 }}>
-                  <Text>Incident Type</Text>
-                  <Picker
-                    selectedValue={incidentType}
-                    onValueChange={(itemValue) => setIncidentType(itemValue)}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      borderRadius: 4,
-                      padding: 8
-                    }}
-                  >
-                    <Picker.Item label="Select Incident Type" value="" />
-                    {Object.entries(incidentTypes).map(([id, type]) => (
-                      <Picker.Item key={id} label={type} value={id} />
-                    ))}
-                  </Picker>
-                </View>
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "#007bff",
-                    padding: 8,
-                    borderRadius: 4,
-                    alignSelf: "flex-start"
-                  }}
-                  onPress={handleSubmit}
-                >
-                  <Text style={{ color: "#fff" }}>Submit</Text>
-                </TouchableOpacity>
-              </View>
-              {isLoading ? (
+              <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
+                <Text style={styles.heading}>Add An Incident</Text>
                 <View
-                  style={[
-                    StyleSheet.absoluteFill,
-                    {
-                      justifyContent: "center",
-                      alignItems: "center",
-                      backgroundColor: "rgba(0,0,0,0.4)"
-                    }
-                  ]}
+                  style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}
                 >
-                  <ActivityIndicator animating size="large" color="#fff" />
+                  <View style={{ marginBottom: 16 }}>
+                    <Text>Incident Description</Text>
+                    <TextInput
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                        padding: 8
+                      }}
+                      multiline
+                      placeholder="This ...."
+                      value={incidentDescription}
+                      onChangeText={(text) => setIncidentDescription(text)}
+                    />
+                  </View>
+                  <View style={{ marginBottom: 16 }}>
+                    <Text>Investigation Status</Text>
+                    <Picker
+                      selectedValue={investigationStatus}
+                      onValueChange={(itemValue) =>
+                        setInvestigationStatus(itemValue)
+                      }
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                        padding: 8
+                      }}
+                    >
+                      <Picker.Item label="Open" value="open" />
+                      <Picker.Item label="Closed" value="closed" />
+                    </Picker>
+                  </View>
+                  <View style={{ marginBottom: 16 }}>
+                    <Text>Incident Status</Text>
+                    <Picker
+                      selectedValue={incidentStatus}
+                      onValueChange={(itemValue) => setIncidentStatus(itemValue)}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                        padding: 8
+                      }}
+                    >
+                      <Picker.Item label="Yes" value="yes" />
+                      <Picker.Item label="No" value="no" />
+                    </Picker>
+                  </View>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "blue",
+                      padding: 10,
+                      borderRadius: 4,
+                      alignItems: "center",
+                      marginBottom: 16
+                    }}
+                    onPress={handleOpenModal}
+                  >
+                    <Text style={{ color: "white" }}>Select Images</Text>
+                  </TouchableOpacity>
+                  <FlatList
+                    data={images}
+                    renderItem={({ item }) => (
+                      <Image source={{ uri: item }} style={styles.images} />
+                    )}
+                    keyExtractor={(item) => item}
+                    horizontal
+                  />
+                  <View style={{ marginBottom: 16 }}>
+                    <Text>Incident Type</Text>
+                    <Picker
+                      selectedValue={incidentType}
+                      onValueChange={(itemValue) => setIncidentType(itemValue)}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: "#ccc",
+                        borderRadius: 4,
+                        padding: 8
+                      }}
+                    >
+                      <Picker.Item label="Select Incident Type" value="" />
+                      {Object.entries(incidentTypes).map(([id, type]) => (
+                        <Picker.Item key={id} label={type} value={id} />
+                      ))}
+                    </Picker>
+                  </View>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "#007bff",
+                      padding: 8,
+                      borderRadius: 4,
+                      alignSelf: "flex-start"
+                    }}
+                    onPress={handleSubmit}
+                  >
+                    <Text style={{ color: "#fff" }}>Submit</Text>
+                  </TouchableOpacity>
                 </View>
-              ) : null}
-              <UploadImageModal
-                visible={modalVisible}
-                onClose={handleCloseModal}
-                onRemoveImage={handleRemoveImage}
-                submit={onSubmit}
-              />
+                {isLoading ? (
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        justifyContent: "center",
+                        alignItems: "center",
+                        backgroundColor: "rgba(0,0,0,0.4)"
+                      }
+                    ]}
+                  >
+                    <ActivityIndicator animating size="large" color="#fff" />
+                  </View>
+                ) : null}
+                <UploadImageModal
+                  visible={modalVisible}
+                  onClose={handleCloseModal}
+                  onRemoveImage={handleRemoveImage}
+                  submit={onSubmit}
+                />
+              </View>
             </View>
-          </View>
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
-            <Text style={styles.footerText}>
-              © 2024 OptiSafe Ltd. All rights reserved.
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </DrawerLayoutAndroid>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                © 2024 OptiSafe Ltd. All rights reserved.
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </DrawerLayoutAndroid>
+    </KeyboardAvoidingWrapper>
   );
 };
 

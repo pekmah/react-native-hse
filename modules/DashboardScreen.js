@@ -8,7 +8,7 @@ import {
   DrawerLayoutAndroid
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -34,18 +34,6 @@ const DashboardScreen = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      // Set dashboard stats
-    //   {
-    //     "attendance": 0,
-    //     "tasks": 0,
-    //     "incidents": 0,
-    //     "icas": 0,
-    //     "sors": 0,
-    //     "supervisor": "No Supervisor Assigned",
-    //     "personells": 0,
-    //     "fire_marshal": "No Fire Marshal Assigned",
-    //     "first_aider": "No First Aider Assigned"
-    // }
 
       setDashboardStats(response.data);
     } catch (error) {
@@ -87,9 +75,9 @@ const DashboardScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Content */}
           <View style={styles.content}>
             {/* First Row */}
@@ -188,7 +176,6 @@ const DashboardScreen = () => {
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
               © 2024 OptiSafe Ltd. All rights reserved.
             </Text>

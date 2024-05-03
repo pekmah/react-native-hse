@@ -12,10 +12,105 @@ import {
   DrawerLayoutAndroid
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Preloader from "./Preloader";
+import Preloader from "../components/Preloader";
+
+const ViewTaskModal = ({ task, onClose, visible }) => {
+  if (!visible || !task) {
+    return null; // If modal is not visible or task data is not provided, don't render anything
+  }
+
+  const cleanMediaUrl = (url) => {
+    return url.replace(
+      /^http:\/\/localhost\/storage\//,
+      config.media_url + "/storage/"
+    );
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View Task</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Title</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.title}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.description}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Comments</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.comments}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Start Date</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.from}
+                editable={false}
+              />
+              <Text style={styles.label}>End Date</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.to}
+                editable={false}
+              />
+              <Text style={styles.label}>Status</Text>
+              <TextInput
+                style={styles.textInput}
+                value={task.status}
+                editable={false}
+              />
+              {/* Render media */}
+              {task.media?.length > 0 && (
+                <View style={styles.mediaContainer}>
+                  <Text style={styles.mediaLabel}>Media:</Text>
+                  {task.media.map((item, index) => (
+                    <View key={index} style={styles.mediaItem}>
+                      <Image
+                        source={{ uri: cleanMediaUrl(item.original_url) }}
+                        style={styles.mediaImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.mediaText}>
+                        Media {item.file_name}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </Modal>
+  );
+};
 
 const TasksScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -24,6 +119,8 @@ const TasksScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
   const drawerRef = useRef(null);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [selectedBadPractice, setSelectedBadPractice] = useState(null);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -64,7 +161,7 @@ const TasksScreen = () => {
       // Handle the response
       if (response.status === 200) {
         // Set the tasks
-        setTasks(response.data.data);
+        setTasks(response.data);
         // Set loading to false
         setIsLoading(false);
       } else {
@@ -88,6 +185,11 @@ const TasksScreen = () => {
   const handlePrevPage = () => {
     setCurrentPage(currentPage - 1);
   };
+
+  const handleViewTask = (task) => {
+    setSelectedBadPractice(task);
+    setIsViewModalVisible(true);
+  }
 
   const renderTasks = () => {
     return tasks
@@ -116,7 +218,7 @@ const TasksScreen = () => {
               height: 30
             }}
             onPress={() => {
-              // Handle view SOR
+              handleViewTask(task);
             }}
           >
             <Text style={{ color: "#fff" }}>View</Text>
@@ -138,9 +240,9 @@ const TasksScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Header */}
           <Text style={styles.title}>Tasks</Text>
           <View style={{ flex: 1, padding: 10 }}>
@@ -187,12 +289,16 @@ const TasksScreen = () => {
                     <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
+                <ViewTaskModal
+                  task={selectedBadPractice}
+                  onClose={() => setIsViewModalVisible(false)}
+                  visible={isViewModalVisible}
+                />
               </>
             )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
               © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
@@ -263,6 +369,75 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#f41313"
+  },
+  modalBody: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  textInput: {
+    padding: 10,
+    backgroundColor: "#eee",
+    color: "#000",
+    borderRadius: 5,
+    marginBottom: 15
+  },
+  mediaScrollView: {
+    flexDirection: "row"
+  },
+  mediaText: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaItem: {
+    marginBottom: 15
+  },
+
+  mediaContainer: {
+    marginBottom: 15
+  },
+  mediaLabel: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaImage: {
+    //calculate the width of the image based on the screen width
+    width: "100%",
+    height: 200,
+    marginBottom: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end"
   }
 });
 

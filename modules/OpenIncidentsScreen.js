@@ -8,44 +8,120 @@ import {
   TextInput,
   DrawerLayoutAndroid,
   StyleSheet,
-  Button
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Preloader from "./Preloader";
+import Preloader from "../components/Preloader";
+import config from "../config/config";
 
-const ViewIncidentModal = () => {
+const ViewIncidentModal = ({ incident, onClose, visible }) => {
+  if (!visible || !incident) {
+    return null;
+  }
+
+  const cleanMediaUrl = (url) => {
+    return url.replace(
+      /^http:\/\/localhost\/storage\//,
+      config.media_url + "/storage/"
+    );
+  };
+
+  function formatIncidentType(incidentType) {
+    // Replace underscores with spaces
+    let formattedType = incidentType.replace(/_/g, " ");
+
+    // Capitalize the first letter of each word
+    formattedType = formattedType.replace(/\b\w/g, function (char) {
+      return char.toUpperCase();
+    });
+
+    return formattedType;
+  }
+
   return (
     <Modal
-      visible={false} // Set the visibility based on some state
       animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
     >
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: 10
-          }}
-        >
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-            View Incident
-          </Text>
-          <TouchableOpacity
-            onPress={() => {
-              /* Close the modal */
-            }}
-          >
-            <Text>Close</Text>
-          </TouchableOpacity>
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View Incident</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Incident Description</Text>
+              <TextInput
+                style={styles.textInput}
+                value={incident.incident_description}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Investigation Status</Text>
+              <TextInput
+                style={styles.textInput}
+                value={
+                  incident.investigation_status == "open" ? "Open" : "Closed"
+                }
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Date</Text>
+              <TextInput
+                style={styles.textInput}
+                value={incident.incident_date}
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Type</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formatIncidentType(incident.incident_type.incident_type)}
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Report</Text>
+              <TextInput
+                style={styles.textInput}
+                value={incident.incident_status == "yes" ? "Done" : "Not Done"}
+                editable={false}
+              />
+              <Text style={styles.label}>Reported By</Text>
+              <TextInput
+                style={styles.textInput}
+                value={incident.user.name}
+                editable={false}
+              />
+              {incident.media && incident.media.length > 0 && (
+                <View style={styles.mediaContainer}>
+                  <Text style={styles.mediaLabel}>Media:</Text>
+                  {incident.media.map((item, index) => (
+                    <View key={index} style={styles.mediaItem}>
+                      <Image
+                        source={{ uri: cleanMediaUrl(item.original_url) }}
+                        style={styles.mediaImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.mediaText}>{item.file_name}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-        <View style={{ paddingHorizontal: 10 }}>
-          {/* Render incident details here */}
-        </View>
-      </View>
+      </ScrollView>
     </Modal>
   );
 };
@@ -57,6 +133,8 @@ const OpenIncidentsScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
   const [loading, setLoading] = useState(false);
+  const [isViewIncidentModalOpen, setIsViewIncidentModalOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState(null);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -116,6 +194,11 @@ const OpenIncidentsScreen = () => {
     setCurrentPage(currentPage - 1);
   };
 
+  const handleViewIncident = (incident) => {
+    setSelectedIncident(incident);
+    setIsViewIncidentModalOpen(true);
+  };
+
   const renderIncidents = () => {
     return incidents && incidents.length > 0 ? (
       incidents
@@ -143,7 +226,7 @@ const OpenIncidentsScreen = () => {
                 alignItems: "center",
                 height: 30
               }}
-              onPress={() => {}}
+              onPress={() => handleViewIncident(incident)}
             >
               <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
@@ -170,9 +253,9 @@ const OpenIncidentsScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Header */}
           <Text style={styles.title}>Open Incidents</Text>
           <View style={{ flex: 1, padding: 10 }}>
@@ -220,12 +303,17 @@ const OpenIncidentsScreen = () => {
                     <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
+                {/* View Incident Modal */}
+                <ViewIncidentModal
+                  incident={selectedIncident}
+                  onClose={() => setIsViewIncidentModalOpen(false)}
+                  visible={isViewIncidentModalOpen}
+                />
               </>
             )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
               © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
@@ -300,6 +388,64 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#f41313"
+  },
+  modalBody: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  textInput: {
+    padding: 10,
+    backgroundColor: "#eee",
+    color: "#000",
+    borderRadius: 5,
+    marginBottom: 15
+  },
+  mediaContainer: {
+    marginBottom: 15
+  },
+  mediaLabel: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaImage: {
+    //calculate the width of the image based on the screen width
+    width: "100%",
+    height: 200,
+    marginBottom: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end"
   }
 });
 

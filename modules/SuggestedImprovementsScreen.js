@@ -11,10 +11,10 @@ import {
   Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Preloader from "./Preloader";
+import Preloader from "../components/Preloader";
 import config from "../config/config";
 
 const ViewImprovementModal = ({ improvement, visible, onClose }) => {
@@ -57,11 +57,11 @@ const ViewImprovementModal = ({ improvement, visible, onClose }) => {
                 multiline={true}
               />
               <Text style={styles.label}>Steps Taken:</Text>
-              {improvement.steps_taken?.map((step, index) => (
+              {Object.keys(improvement.steps_taken).map((key, index) => (
                 <TextInput
                   key={index}
                   style={styles.textInput}
-                  value={step || "No steps taken data available"}
+                  value={improvement.steps_taken[key]}
                   editable={false}
                   multiline={true}
                 />
@@ -238,9 +238,9 @@ const SuggestedImprovementsScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <Text style={styles.title}>Suggested Improvements</Text>
           <View style={{ flex: 1, padding: 10 }}>
             {/* Render the preloader if loading */}
@@ -295,6 +295,12 @@ const SuggestedImprovementsScreen = () => {
               </>
             )}
           </View>
+           {/* Footer */}
+           <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              © 2024 OptiSafe Ltd. All rights reserved.
+            </Text>
+          </View>
         </ScrollView>
       </View>
     </DrawerLayoutAndroid>
@@ -345,6 +351,17 @@ const styles = StyleSheet.create({
   pageIndicator: {
     padding: 8,
     marginHorizontal: 5,
+    textAlign: "center"
+  },
+
+  footer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    marginTop: 10,
+    alignItems: "center"
+  },
+  footerText: {
+    color: "#666",
     textAlign: "center"
   },
   preloaderContainer: {

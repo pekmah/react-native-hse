@@ -10,7 +10,7 @@ import {
   StyleSheet
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 
 const PersonnelDetailModal = ({ visible, onClose }) => {
   return (
@@ -176,9 +176,9 @@ const PersonnelScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Header */}
           <TouchableOpacity style={styles.addButton} onPress={{}}>
             <Ionicons name="add" size={24} color="white" />
@@ -248,7 +248,6 @@ const PersonnelScreen = () => {
         </ScrollView>
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
           <Text style={styles.footerText}>
             © 2024 OptiSafe Ltd. All rights reserved.
           </Text>

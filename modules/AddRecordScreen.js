@@ -20,8 +20,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { FlatList } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import config from "../config/config";
+import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
+
 
 let images = [];
 
@@ -148,12 +150,45 @@ const AddRecordScreen = () => {
   const drawerRef = useRef(null);
   const [observation, setObservation] = useState("");
   const [status, setStatus] = useState("0");
-  const [stepsTaken, setStepsTaken] = useState("");
+  const [stepsTaken, setStepsTaken] = useState({});
   const [actionOwner, setActionOwner] = useState("");
   const [sorTypes, setSorTypes] = useState([]);
   const [selectedType, setSelectedType] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setLoading] = useState(false);
+
+  // Function to handle adding a step
+  const addStep = () => {
+    const newStepNumber = Object.keys(stepsTaken).length + 1;
+    setStepsTaken({
+      ...stepsTaken,
+      [newStepNumber]: "" // Add a new step with an empty string value
+    });
+  };
+
+  // Function to handle updating a step
+  const updateStep = (stepNumber, value) => {
+    setStepsTaken({
+      ...stepsTaken,
+      [stepNumber]: value // Update the step with the given stepNumber
+    });
+  };
+
+  // Function to handle removing a step
+  const removeStep = (stepNumber) => {
+    const newSteps = { ...stepsTaken };
+    delete newSteps[stepNumber]; // Remove the step with the given stepNumber
+    setStepsTaken(newSteps);
+  };
+
+  // Function to update JSON representation of steps
+  const updateStepsJson = () => {
+    const stepsJson = [];
+    for (const stepNumber in stepsTaken) {
+      stepsJson.push(stepsTaken[stepNumber]);
+    }
+    setStepsTaken(stepsJson);
+  };
 
   useEffect(() => {
     const fetchSorTypes = async () => {
@@ -204,7 +239,7 @@ const AddRecordScreen = () => {
 
     formData.append("observation", observation);
     formData.append("status", status);
-    formData.append("steps_taken", stepsTaken);
+    formData.append("steps_taken", JSON.stringify(stepsTaken));
     formData.append("action_owner", actionOwner);
     formData.append("type_id", selectedType);
 
@@ -217,8 +252,8 @@ const AddRecordScreen = () => {
       };
       formData.append("images[]", image); // Use key with square brackets
     }
-
-    console.log("formData  after", formData);
+    console.log("steps taken", stepsTaken);
+    console.log("formData after", formData);
     onSubmit(formData);
   };
 
@@ -254,7 +289,7 @@ const AddRecordScreen = () => {
       } else {
         setObservation("");
         setStatus("0");
-        setStepsTaken("");
+        setStepsTaken({});
         setActionOwner("");
         setSelectedType("");
 
@@ -271,6 +306,7 @@ const AddRecordScreen = () => {
       }
     } catch (error) {
       console.error("Error creating SOR record:", error);
+      console.log("error", error.message);
       setLoading(false);
       Alert.alert("Error", "Failed to create SOR record.");
     }
@@ -297,164 +333,185 @@ const AddRecordScreen = () => {
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
   return (
-    <DrawerLayoutAndroid
-      ref={drawerRef}
-      drawerWidth={200}
-      drawerPosition="left"
-      renderNavigationView={navigationView}
-    >
-      <View style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          onTouchStart={handleOutsideTouch}
-          onScrollBeginDrag={handleOutsideTouch}
-        >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+    <KeyboardAvoidingWrapper>
+      <DrawerLayoutAndroid
+        ref={drawerRef}
+        drawerWidth={200}
+        drawerPosition="left"
+        renderNavigationView={navigationView}
+      >
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            onTouchStart={handleOutsideTouch}
+            onScrollBeginDrag={handleOutsideTouch}
+          >
+            {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
-          <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
-            <Text style={styles.title}>Add Safety Observation Record</Text>
-            <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
-              <View style={{ marginBottom: 16 }}>
-                <Text>Observation</Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    padding: 8
-                  }}
-                  placeholder="Enter Observation"
-                  value={observation}
-                  onChangeText={(text) => setObservation(text)}
-                />
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text>Status</Text>
-                <Picker
-                  selectedValue={status}
-                  onValueChange={(itemValue) => setStatus(itemValue)}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    padding: 8
-                  }}
-                >
-                  <Picker.Item label="Open" value="0" />
-                  <Picker.Item label="Closed" value="1" />
-                </Picker>
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text>Steps Taken</Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    padding: 8
-                  }}
-                  multiline
-                  placeholder="Enter Steps Taken"
-                  value={stepsTaken}
-                  onChangeText={(text) => setStepsTaken(text)}
-                />
-              </View>
-              <View style={{ marginBottom: 16 }}>
-                <Text>Action Owner</Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    padding: 8
-                  }}
-                  placeholder="Enter Action Owner"
-                  value={actionOwner}
-                  onChangeText={(text) => setActionOwner(text)}
-                />
-              </View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "blue",
-                  padding: 10,
-                  borderRadius: 4,
-                  alignItems: "center",
-                  marginBottom: 16
-                }}
-                onPress={handleOpenModal}
-              >
-                <Text style={{ color: "white" }}>Select Images</Text>
-              </TouchableOpacity>
-              <FlatList
-                data={images}
-                renderItem={({ item }) => (
-                  <Image source={{ uri: item }} style={styles.images} />
-                )}
-                keyExtractor={(item) => item}
-                horizontal
-              />
-              <View style={{ marginBottom: 16 }}>
-                <Text>Record Type</Text>
-                <Picker
-                  selectedValue={selectedType}
-                  onValueChange={(itemValue) => setSelectedType(itemValue)}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    padding: 8
-                  }}
-                >
-                  <Picker.Item label="Select Record Type" value="" />
-                  {Object.entries(sorTypes).map(([id, type]) => (
-                    <Picker.Item key={id} label={type} value={id} />
+          </TouchableOpacity> */}
+            <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 24 }}>
+              <Text style={styles.title}>Add Safety Observation Record</Text>
+              <View style={{ borderWidth: 1, borderColor: "#ccc", padding: 16 }}>
+                <View style={{ marginBottom: 16 }}>
+                  <Text>Observation</Text>
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 4,
+                      padding: 8
+                    }}
+                    placeholder="Enter Observation"
+                    value={observation}
+                    onChangeText={(text) => setObservation(text)}
+                  />
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text>Status</Text>
+                  <Picker
+                    selectedValue={status}
+                    onValueChange={(itemValue) => setStatus(itemValue)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 4,
+                      padding: 8
+                    }}
+                  >
+                    <Picker.Item label="Select Status" value="" />
+                    <Picker.Item label="Open" value="0" />
+                    <Picker.Item label="Closed" value="1" />
+                  </Picker>
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text>Steps Taken</Text>
+                  {/* Render text inputs for each step */}
+                  {Object.entries(stepsTaken).map(([stepNumber, value]) => (
+                    <View
+                      key={stepNumber}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginBottom: 8
+                      }}
+                    >
+                      <TextInput
+                        style={{
+                          flex: 1,
+                          borderWidth: 1,
+                          borderColor: "#ccc",
+                          borderRadius: 4,
+                          padding: 8
+                        }}
+                        placeholder="Enter Step"
+                        value={value}
+                        onChangeText={(text) => updateStep(stepNumber, text)}
+                      />
+                      <TouchableOpacity
+                        onPress={() => removeStep(stepNumber)}
+                        style={{ marginLeft: 8 }}
+                      >
+                        <Ionicons name="trash" size={24} color="red" />
+                      </TouchableOpacity>
+                    </View>
                   ))}
-                </Picker>
-              </View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "green",
-                  padding: 10,
-                  borderRadius: 4,
-                  alignItems: "center"
-                }}
-                onPress={handleSubmit}
-              >
-                <Text style={{ color: "white" }}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-            {isLoading ? (
-              <View
-                style={[
-                  StyleSheet.absoluteFill,
-                  {
-                    justifyContent: "center",
+                  <Button title="Add Step" onPress={addStep} />
+                </View>
+                <View style={{ marginBottom: 16 }}>
+                  <Text>Action Owner</Text>
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 4,
+                      padding: 8
+                    }}
+                    placeholder="Enter Action Owner"
+                    value={actionOwner}
+                    onChangeText={(text) => setActionOwner(text)}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "blue",
+                    padding: 10,
+                    borderRadius: 4,
                     alignItems: "center",
-                    backgroundColor: "rgba(0,0,0,0.4)"
-                  }
-                ]}
-              >
-                <ActivityIndicator animating size="large" color="#fff" />
+                    marginBottom: 16
+                  }}
+                  onPress={handleOpenModal}
+                >
+                  <Text style={{ color: "white" }}>Select Images</Text>
+                </TouchableOpacity>
+                <FlatList
+                  data={images}
+                  renderItem={({ item }) => (
+                    <Image source={{ uri: item }} style={styles.images} />
+                  )}
+                  keyExtractor={(item) => item}
+                  horizontal
+                />
+                <View style={{ marginBottom: 16 }}>
+                  <Text>Record Type</Text>
+                  <Picker
+                    selectedValue={selectedType}
+                    onValueChange={(itemValue) => setSelectedType(itemValue)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 4,
+                      padding: 8
+                    }}
+                  >
+                    <Picker.Item label="Select Record Type" value="" />
+                    {Object.entries(sorTypes).map(([id, type]) => (
+                      <Picker.Item key={id} label={type} value={id} />
+                    ))}
+                  </Picker>
+                </View>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "green",
+                    padding: 10,
+                    borderRadius: 4,
+                    alignItems: "center"
+                  }}
+                  onPress={handleSubmit}
+                >
+                  <Text style={{ color: "white" }}>Submit</Text>
+                </TouchableOpacity>
               </View>
-            ) : null}
-            <UploadImageModal
-              visible={modalVisible}
-              onClose={handleCloseModal}
-              onRemoveImage={handleRemoveImage}
-              submit={onSubmit}
-            />
-          </View>
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
-            <Text style={styles.footerText}>
-              © 2024 OptiSafe Ltd. All rights reserved.
-            </Text>
-          </View>
-        </ScrollView>
-      </View>
-    </DrawerLayoutAndroid>
+              {isLoading ? (
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    {
+                      justifyContent: "center",
+                      alignItems: "center",
+                      backgroundColor: "rgba(0,0,0,0.4)"
+                    }
+                  ]}
+                >
+                  <ActivityIndicator animating size="large" color="#fff" />
+                </View>
+              ) : null}
+              <UploadImageModal
+                visible={modalVisible}
+                onClose={handleCloseModal}
+                onRemoveImage={handleRemoveImage}
+                submit={onSubmit}
+              />
+            </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                © 2024 OptiSafe Ltd. All rights reserved.
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </DrawerLayoutAndroid>
+    </KeyboardAvoidingWrapper>
   );
 };
 

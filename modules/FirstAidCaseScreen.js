@@ -8,13 +8,132 @@ import {
   TextInput,
   DrawerLayoutAndroid,
   StyleSheet,
-  Button
+  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import MenuScreen from "./MenuScreen";
+import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Preloader from "./Preloader";
+import Preloader from "../components/Preloader";
+import config from "../config/config";
+
+const ViewFirstAidCaseModal = ({ firstaidcase, onClose, visible }) => {
+  if (!visible || !firstaidcase) {
+    return null;
+  }
+
+  const cleanMediaUrl = (url) => {
+    return url.replace(
+      /^http:\/\/localhost\/storage\//,
+      config.media_url + "/storage/"
+    );
+  };
+
+  function formatIncidentType(incidentType) {
+    // Replace underscores with spaces
+    let formattedType = incidentType.replace(/_/g, " ");
+
+    // Capitalize the first letter of each word
+    formattedType = formattedType.replace(/\b\w/g, function (char) {
+      return char.toUpperCase();
+    });
+
+    return formattedType;
+  }
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View First Aid Case</Text>
+              <TouchableOpacity>
+                <Ionicons.Button
+                  name="close-circle"
+                  size={20}
+                  onPress={onClose}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Incident Description</Text>
+              <TextInput
+                style={styles.textInput}
+                value={firstaidcase.incident_description}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Investigation Status</Text>
+              <TextInput
+                style={styles.textInput}
+                value={
+                  firstaidcase.investigation_status == "open"
+                    ? "Open"
+                    : "Closed"
+                }
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Date</Text>
+              <TextInput
+                style={styles.textInput}
+                value={firstaidcase.incident_date}
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Type</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formatIncidentType(
+                  firstaidcase.incident_type.incident_type
+                )}
+                editable={false}
+              />
+              <Text style={styles.label}>Incident Report</Text>
+              <TextInput
+                style={styles.textInput}
+                value={
+                  firstaidcase.incident_status == "yes" ? "Done" : "Not Done"
+                }
+                editable={false}
+              />
+              <Text style={styles.label}>Reported By</Text>
+              <TextInput
+                style={styles.textInput}
+                value={firstaidcase.user.name}
+                editable={false}
+              />
+              {firstaidcase.media && firstaidcase.media.length > 0 && (
+                <View style={styles.mediaContainer}>
+                  <Text style={styles.mediaLabel}>Media:</Text>
+                  {firstaidcase.media.map((item, index) => (
+                    <View key={index} style={styles.mediaItem}>
+                      <Image
+                        source={{ uri: cleanMediaUrl(item.original_url) }}
+                        style={styles.mediaImage}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.mediaText}>{item.file_name}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </Modal>
+  );
+};
 
 const FirstAidCaseScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -24,6 +143,9 @@ const FirstAidCaseScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
   const [loading, setLoading] = useState(false);
+  const [selectedFirstAidCase, setSelectedFirstAidCase] = useState(null);
+  const [isViewFirstAidCaseModalOpen, setIsViewFirstAidCaseModalOpen] =
+    useState(null);
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -79,6 +201,12 @@ const FirstAidCaseScreen = () => {
   const handlePrevPage = () => {
     setCurrentPage(currentPage - 1);
   };
+
+  const handleViewFirstAidCase = (firstaidcase) => {
+    setSelectedFirstAidCase(firstaidcase);
+    setIsViewFirstAidCaseModalOpen(true);
+  };
+
   const renderFirstAidCases = () => {
     if (!firstAidCases || firstAidCases.length === 0) {
       return (
@@ -113,7 +241,7 @@ const FirstAidCaseScreen = () => {
                   alignItems: "center",
                   height: 30
                 }}
-                onPress={() => {}}
+                onPress={() => handleViewFirstAidCase(firstAidCase)}
               >
                 <Text style={{ color: "#fff" }}>View</Text>
               </TouchableOpacity>
@@ -137,14 +265,14 @@ const FirstAidCaseScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
+          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
             <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           {/* Header */}
           <Text style={styles.title}>First Aid Cases</Text>
           <View style={{ flex: 1, padding: 10 }}>
-             {/* Render the preloader if loading */}
-             {loading && (
+            {/* Render the preloader if loading */}
+            {loading && (
               <View style={styles.preloaderContainer}>
                 <Preloader />
               </View>
@@ -152,45 +280,51 @@ const FirstAidCaseScreen = () => {
             {/* Render SORs if not loading */}
             {!loading && (
               <>
-            <View
-              style={{
-                flexDirection: "row",
-                borderBottomWidth: 1,
-                borderBottomColor: "#ccc"
-              }}
-            >
-              <Text style={[styles.heading, styles.column]}>
-                Incident Description
-              </Text>
-              <Text style={[styles.heading, styles.column]}>Actions</Text>
-            </View>
-            {renderFirstAidCases()}
-            {/* Pagination controls */}
-            <View style={{ flexDirection: "row", justifyContent: "center" }}>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                <Text>Previous</Text>
-              </TouchableOpacity>
-              <Text style={styles.pageIndicator}>
-                Page {currentPage} of {totalPages}
-              </Text>
-              <TouchableOpacity
-                style={styles.paginationButton}
-                onPress={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                <Text>Next</Text>
-              </TouchableOpacity>
-            </View>
-            </>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#ccc"
+                  }}
+                >
+                  <Text style={[styles.heading, styles.column]}>
+                    Incident Description
+                  </Text>
+                  <Text style={[styles.heading, styles.column]}>Actions</Text>
+                </View>
+                {renderFirstAidCases()}
+                {/* Pagination controls */}
+                <View
+                  style={{ flexDirection: "row", justifyContent: "center" }}
+                >
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handlePrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <Text>Previous</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.pageIndicator}>
+                    Page {currentPage} of {totalPages}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.paginationButton}
+                    onPress={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    <Text>Next</Text>
+                  </TouchableOpacity>
+                </View>
+                <ViewFirstAidCaseModal
+                  firstaidcase={selectedFirstAidCase}
+                  onClose={() => setIsViewFirstAidCaseModalOpen(false)}
+                  visible={isViewFirstAidCaseModalOpen}
+                />
+              </>
             )}
           </View>
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>OptiSafe Health & Safety</Text>
             <Text style={styles.footerText}>
               © 2024 OptiSafe Ltd. All rights reserved.
             </Text>
@@ -265,6 +399,64 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
+  },
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#f41313"
+  },
+  modalBody: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  textInput: {
+    padding: 10,
+    backgroundColor: "#eee",
+    color: "#000",
+    borderRadius: 5,
+    marginBottom: 15
+  },
+  mediaContainer: {
+    marginBottom: 15
+  },
+  mediaLabel: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaImage: {
+    //calculate the width of the image based on the screen width
+    width: "100%",
+    height: 200,
+    marginBottom: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end"
   }
 });
 

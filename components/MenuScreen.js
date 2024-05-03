@@ -70,12 +70,12 @@ const VerticalNav = () => {
             isActive={activeMenuItem === "Dashboard"}
           />
           <MenuItem
-            title="Supervisor"
+            title="Contractor Supervisor"
             onPress={() => handleMenuItemPress("Supervisor")}
             isActive={activeMenuItem === "Supervisor"}
           />
           <MenuItem
-            title="Personnel"
+            title="Personnel Detail"
             onPress={() => handleMenuItemPress("Personnel")}
             isActive={activeMenuItem === "Personnel"}
           />
