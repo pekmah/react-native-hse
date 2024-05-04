@@ -8,7 +8,7 @@ import {
   TextInput,
   DrawerLayoutAndroid,
   StyleSheet,
-  Image
+  ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "../components/MenuScreen";
@@ -16,6 +16,176 @@ import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Preloader from "../components/Preloader";
 import config from "../config/config";
+import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "@react-navigation/native";
+
+
+const AddPermitModal = ({ isVisible, onClose }) => {
+  if (!isVisible) {
+    return null;
+  }
+
+  const [type, setType] = useState("");
+  const [areaOwner, setAreaOwner] = useState("");
+  const [authorizedPerson, setAuthorizedPerson] = useState("");
+  const [competentPerson, setCompetentPerson] = useState("");
+  const [isLoading, setLoading] = useState(false);
+
+
+
+  //Handle the form submission
+  const handleFormData = async () => {
+    if (!type || !areaOwner || !authorizedPerson || !competentPerson) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    //prepare the data
+    const formData = new FormData();
+
+    formData.append("type", type);
+    formData.append("area_owner", areaOwner);
+    formData.append("authorized_person", authorizedPerson);
+    formData.append("competent_person", competentPerson);
+
+    onsubmit(formData);
+  };
+
+  const onsubmit = async (formData) => {
+    setLoading(true);
+    try {
+      // Fetch token from async storage
+      const token = await AsyncStorage.getItem("token");
+
+      // Fetch permits
+      const response = await fetch(`${config.apiBaseUrl}/add-permit`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      // Handle the response
+      if (response.status === 200) {
+        console.log(response.data);
+        alert("Permit added successfully");
+        setType("");
+        setAreaOwner("");
+        setAuthorizedPerson("");
+        setCompetentPerson("");
+        setLoading(false);
+        onClose();
+        // Refresh the permits
+        retrievePermits();
+      } else {
+        console.error(response.data);
+        setLoading(false);
+      }
+
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Permit</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Permit Type:</Text>
+              <Picker
+                selectedValue={type}
+                style={styles.textInput}
+                onValueChange={(itemValue) => setType(itemValue)}
+              >
+                <Picker.Item label="Select Permit Type" value="" />
+                <Picker.Item label="General Work" value="General Work" />
+                <Picker.Item label="Hot Work" value="Hot Work" />
+                <Picker.Item label="Confined Space Entry" value="Confined Space Entry" />
+                <Picker.Item label="Cold Work" value="Cold Work" />
+                <Picker.Item label="Live Electrical Work" value="Live Electrical Work" />
+                <Picker.Item label="Work at Height" value="Work at Height" />
+                <Picker.Item label="Excavation/Demolition Work" value="Excavation/Demolition Work" />
+              </Picker>
+              <Text style={styles.label}>Area Owner:</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  borderRadius: 4,
+                  padding: 8,
+                  marginBottom: 15
+                }} value={areaOwner}
+                onChangeText={setAreaOwner}
+              />
+              <Text style={styles.label}>Authorized Person:</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  borderRadius: 4,
+                  padding: 8,
+                  marginBottom: 15
+                }}
+                value={authorizedPerson}
+                onChangeText={setAuthorizedPerson}
+              />
+              <Text style={styles.label}>Competent Person:</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ccc",
+                  borderRadius: 4,
+                  padding: 8,
+                  marginBottom: 15
+                }}
+                value={competentPerson}
+                onChangeText={setCompetentPerson}
+              />
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={{ marginLeft: 10, padding: 5, borderRadius: 5, backgroundColor: "#007bff" }} onPress={handleFormData}>
+                <Text>Add Permit</Text>
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.4)"
+                  }
+                ]}
+              >
+                <ActivityIndicator animating size="large" color="#fff" />
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </ScrollView>
+    </Modal>
+  );
+};
 
 const PermitViewModal = ({ permit, isVisible, onClose }) => {
   if (!permit || !isVisible) {
@@ -100,6 +270,7 @@ const PermitsApplicableScreen = () => {
   const [selectedPermit, setSelectedPermit] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
 
   const toggleDrawer = () => {
@@ -120,6 +291,7 @@ const PermitsApplicableScreen = () => {
     drawerRef.current.closeDrawer();
   };
 
+  const navigation = useNavigation();
 
 
   const retrievePermits = async () => {
@@ -139,13 +311,19 @@ const PermitsApplicableScreen = () => {
       if (response.status === 200) {
         setPermits(response.data.data);
         setLoading(false);
-      } else {
-        console.error(response.data);
+
       }
     } catch (error) {
       setLoading(false);
+      if (error.response.status === 401) {
+        alert("You are not authorized to view this page try logging in again");
+        //remove token from async storage
+        await AsyncStorage.removeItem("token");
+        await AsyncStorage.removeItem("user");
+        //redirect to dashboard page
+        navigation.navigate("Dashboard");
+      }
 
-      console.error(error);
     }
   };
 
@@ -156,6 +334,7 @@ const PermitsApplicableScreen = () => {
 
 
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
 
   const totalPages = Math.ceil(permits.length / itemsPerPage);
 
@@ -172,7 +351,12 @@ const PermitsApplicableScreen = () => {
     setSelectedPermit(permit);
     setIsViewModalVisible(true);
   };
-  console.log(permits);
+
+  // handle add Permit
+  const handleAddPermit = () => {
+    setIsAddModalVisible(true);
+  };
+
   const renderPermits = () => {
     return permits
       .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -230,6 +414,9 @@ const PermitsApplicableScreen = () => {
           </TouchableOpacity> */}
           {/* Header */}
           <Text style={styles.title}>Permits Applicable</Text>
+          <TouchableOpacity style={styles.addButton} onPress={handleAddPermit}>
+            <Ionicons name="add" size={24} color="#fff" />
+          </TouchableOpacity>
           <View style={{ flex: 1, padding: 10 }}>
             {/* Render the preloader if loading */}
             {loading && (
@@ -277,6 +464,11 @@ const PermitsApplicableScreen = () => {
                     <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
+                {/* Add Permit Modal */}
+                <AddPermitModal
+                  isVisible={isAddModalVisible}
+                  onClose={() => setIsAddModalVisible(false)}
+                />
                 {/* View Permit Modal */}
                 <PermitViewModal
                   permit={selectedPermit}
@@ -318,7 +510,7 @@ const styles = StyleSheet.create({
     borderRadius: 5
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     textAlign: "center",
     marginVertical: 10
   },
@@ -368,7 +560,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)"
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: "100%",
   },
   modalContent: {
     backgroundColor: "#fff",
@@ -422,6 +615,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end"
   }
+
 });
 
 export default PermitsApplicableScreen;

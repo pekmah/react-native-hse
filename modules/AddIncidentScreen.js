@@ -310,7 +310,6 @@ const AddIncidentScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingWrapper>
       <DrawerLayoutAndroid
         ref={drawerRef}
         drawerWidth={200}
@@ -466,7 +465,6 @@ const AddIncidentScreen = () => {
           </ScrollView>
         </View>
       </DrawerLayoutAndroid>
-    </KeyboardAvoidingWrapper>
   );
 };
 

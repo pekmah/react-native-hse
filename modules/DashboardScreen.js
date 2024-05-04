@@ -35,9 +35,21 @@ const DashboardScreen = () => {
         }
       });
 
-      setDashboardStats(response.data);
+      // setDashboardStats(response.data);
+
+      if (response.status === 200) {
+        setDashboardStats(response.data);
+      } else {
+        console.log("Error fetching dashboard stats");
+      }
     } catch (error) {
-      console.log(error);
+      if (error.response.status === 401) {
+        alert("You are not authorized to view this page try logging in again");
+        //remove token from async storage
+        await AsyncStorage.removeItem("token");
+        await AsyncStorage.removeItem("user");
+        //redirect to dashboard page
+        navigation.navigate("Login");      }
     }
   };
 
@@ -98,7 +110,7 @@ const DashboardScreen = () => {
                 <Text style={styles.cardFooter}></Text>
               </View>
               <View style={styles.card}>
-                <Text style={styles.cardHeader}>Fire Martial’s Detail</Text>
+                <Text style={styles.cardHeader}>Fire Marshal’s Detail</Text>
                 <View style={styles.cardBody}>
                   <Text style={styles.cardContent}>{dashboardStats?.fire_marshal}</Text>
                 </View>

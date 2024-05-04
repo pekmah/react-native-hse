@@ -63,17 +63,113 @@ const LandingPage = () => {
         drawerRef.current.closeDrawer();
     };
 
-  
+
     const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    // Function to check if user is logged in
+    const checkLogin = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            if (token) {
+                setIsAuthenticated(true);
+            } else {
+                setIsAuthenticated(false);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    useEffect(() => {
+        checkLogin();
+    }, []);
 
     return (
         <NavigationContainer>
+            {isAuthenticated ? (
+                <DrawerLayoutAndroid
+                    ref={drawerRef}
+                    drawerWidth={200}
+                    drawerPosition="left"
+                    renderNavigationView={navigationView}
+                >
+                    <Stack.Navigator
+                        initialRouteName="Dashboard"
+                        screenOptions={{
+                            headerStyle: {
+                                backgroundColor: "#fbf7fc"
+                            },
+                            headerTintColor: "#fff",
+                            headerTitleAlign: "center",
+                            headerTitle: "Quality Health And Safety",
+                            headerTitleStyle: {
+                                fontWeight: "bold",
+                                fontSize: 20,
+                                color: "#007bff"
+                            },
+                            headerLeft: (props) => (
+                                <TouchableOpacity onPress={toggleDrawer}>
+                                    <Ionicons
+                                        name="menu"
+                                        size={30}
+                                        color="#007bff"
+                                        style={{ marginLeft: 10 }}
+                                    />
+                                </TouchableOpacity>
+                            )
+                        }}
+                    >
 
-            <DrawerLayoutAndroid
-                ref={drawerRef}
-                drawerWidth={200}
-                drawerPosition="left"
-                renderNavigationView={navigationView}>
+                        <Stack.Screen name="Login" component={LoginScreen} />
+                        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+                        <Stack.Screen name="Supervisor" component={SupervisorScreen} />
+                        <Stack.Screen name="Personnel" component={PersonnelScreen} />
+                        <Stack.Screen name="Tasks" component={TasksScreen} />
+                        <Stack.Screen name="Open Incidents" component={OpenIncidentsScreen} />
+                        <Stack.Screen name="Open Sors" component={OpenSorsScreen} />
+                        <Stack.Screen
+                            name="Reported Hazards"
+                            component={ReportedHazardsScreen}
+                        />
+                        <Stack.Screen name="Near Miss" component={NearMissScreen} />
+                        <Stack.Screen
+                            name="Lost Time Accident"
+                            component={LostTimeAccidentScreen}
+                        />
+                        <Stack.Screen
+                            name="Medical Treatment Case"
+                            component={MedicalTreatmentCaseScreen}
+                        />
+                        <Stack.Screen name="First Aid Case" component={FirstAidCaseScreen} />
+                        <Stack.Screen name="SIF" component={SIFScreen} />
+                        <Stack.Screen
+                            name="Environmental Concerns"
+                            component={EnvironmentalConcernsScreen}
+                        />
+                        <Stack.Screen name="Bad Practises" component={BadPractisesScreen} />
+                        <Stack.Screen name="Good Practises" component={GoodPractisesScreen} />
+                        <Stack.Screen
+                            name="Suggested Improvements"
+                            component={SuggestedImprovementsScreen}
+                        />
+                        <Stack.Screen
+                            name="Permits Applicable"
+                            component={PermitsApplicableScreen}
+                        />
+                        <Stack.Screen name="Add Incident" component={AddIncidentScreen} />
+                        <Stack.Screen name="Add Record" component={AddRecordScreen} />
+                        <Stack.Screen name="Add Ica" component={AddIcaScreen} />
+                        <Stack.Screen name="View Ica" component={ViewIcaScreen} />
+                        <Stack.Screen
+                            name="Add Environment Concern"
+                            component={AddEnvironmentalConcerns}
+                        />
+
+                    </Stack.Navigator>
+                </DrawerLayoutAndroid>
+            ) : (
+
                 <Stack.Navigator
                     initialRouteName="Login"
                     screenOptions={{
@@ -89,65 +185,12 @@ const LandingPage = () => {
                             fontSize: 20,
                             color: "#007bff"
                         },
-                        headerLeft: (props) => (
-                            <TouchableOpacity onPress={toggleDrawer}>
-                                <Ionicons
-                                    name="menu"
-                                    size={30}
-                                    color="#007bff"
-                                    style={{ marginLeft: 10 }}
-                                />
-                            </TouchableOpacity>
-                        )
+
                     }}
                 >
                     <Stack.Screen name="Login" component={LoginScreen} />
-                    <Stack.Screen name="Dashboard" component={DashboardScreen} />
-                    <Stack.Screen name="Supervisor" component={SupervisorScreen} />
-                    <Stack.Screen name="Personnel" component={PersonnelScreen} />
-                    <Stack.Screen name="Tasks" component={TasksScreen} />
-                    <Stack.Screen name="Open Incidents" component={OpenIncidentsScreen} />
-                    <Stack.Screen name="Open Sors" component={OpenSorsScreen} />
-                    <Stack.Screen
-                        name="Reported Hazards"
-                        component={ReportedHazardsScreen}
-                    />
-                    <Stack.Screen name="Near Miss" component={NearMissScreen} />
-                    <Stack.Screen
-                        name="Lost Time Accident"
-                        component={LostTimeAccidentScreen}
-                    />
-                    <Stack.Screen
-                        name="Medical Treatment Case"
-                        component={MedicalTreatmentCaseScreen}
-                    />
-                    <Stack.Screen name="First Aid Case" component={FirstAidCaseScreen} />
-                    <Stack.Screen name="SIF" component={SIFScreen} />
-                    <Stack.Screen
-                        name="Environmental Concerns"
-                        component={EnvironmentalConcernsScreen}
-                    />
-                    <Stack.Screen name="Bad Practises" component={BadPractisesScreen} />
-                    <Stack.Screen name="Good Practises" component={GoodPractisesScreen} />
-                    <Stack.Screen
-                        name="Suggested Improvements"
-                        component={SuggestedImprovementsScreen}
-                    />
-                    <Stack.Screen
-                        name="Permits Applicable"
-                        component={PermitsApplicableScreen}
-                    />
-                    <Stack.Screen name="Add Incident" component={AddIncidentScreen} />
-                    <Stack.Screen name="Add Record" component={AddRecordScreen} />
-                    <Stack.Screen name="Add Ica" component={AddIcaScreen} />
-                    <Stack.Screen name="View Ica" component={ViewIcaScreen} />
-                    <Stack.Screen
-                        name="Add Environment Concern"
-                        component={AddEnvironmentalConcerns}
-                    />
-
                 </Stack.Navigator>
-            </DrawerLayoutAndroid>
+            )}
         </NavigationContainer>
     );
 }
@@ -161,6 +204,7 @@ const LoginScreen = ({ navigation }) => {
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
 
     const handleTogglePassword = () => {
         setShowPassword(!showPassword);

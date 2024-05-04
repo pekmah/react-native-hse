@@ -301,7 +301,6 @@ const AddIcaScreen = () => {
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
   return (
-    <KeyboardAvoidingWrapper>
       <DrawerLayoutAndroid
         ref={drawerRef}
         drawerWidth={200}
@@ -462,7 +461,6 @@ const AddIcaScreen = () => {
           </ScrollView>
         </View>
       </DrawerLayoutAndroid>
-    </KeyboardAvoidingWrapper>
   );
 };
 

@@ -333,7 +333,6 @@ const AddRecordScreen = () => {
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
   return (
-    <KeyboardAvoidingWrapper>
       <DrawerLayoutAndroid
         ref={drawerRef}
         drawerWidth={200}
@@ -511,7 +510,6 @@ const AddRecordScreen = () => {
           </ScrollView>
         </View>
       </DrawerLayoutAndroid>
-    </KeyboardAvoidingWrapper>
   );
 };
 
