@@ -80,6 +80,11 @@ const VerticalNav = () => {
             isActive={activeMenuItem === "Personnel"}
           />
           <MenuItem
+            title="First Responders"
+            onPress={() => handleMenuItemPress("First Responder")}
+            isActive={activeMenuItem === "First Responder"}
+          />
+          <MenuItem
             title="SOR's"
             onPress={() => handleSubmenuPress("SORs")}
             isActive={showSubmenu.SORs}

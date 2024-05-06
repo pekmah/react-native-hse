@@ -34,6 +34,7 @@ import SuggestedImprovementsScreen from "./SuggestedImprovementsScreen";
 import SupervisorScreen from "./SupervisorScreen";
 import TasksScreen from "./TasksScreen";
 import ViewIcaScreen from "./ViewIcaScreen";
+import FirstResponderScreen from "./FirstResponderScreen";
 import AddEnvironmentalConcerns from "./AddEnvironmentalConcerns";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ApiManager from "../api/ApiManager";
@@ -125,6 +126,7 @@ const LandingPage = () => {
                         <Stack.Screen name="Dashboard" component={DashboardScreen} />
                         <Stack.Screen name="Supervisor" component={SupervisorScreen} />
                         <Stack.Screen name="Personnel" component={PersonnelScreen} />
+                        <Stack.Screen name="First Responder" component={FirstResponderScreen} />
                         <Stack.Screen name="Tasks" component={TasksScreen} />
                         <Stack.Screen name="Open Incidents" component={OpenIncidentsScreen} />
                         <Stack.Screen name="Open Sors" component={OpenSorsScreen} />

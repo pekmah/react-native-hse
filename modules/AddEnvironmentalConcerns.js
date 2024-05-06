@@ -16,12 +16,101 @@ import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 
 
 const AddCheckListModal = ({ isVisible, onClose }) => {
-  const [checklist, setChecklist] = useState([]);
+  const [comments, setComments] = useState("");
+  const [correctiveAction, setCorrectiveAction] = useState([]);
+  const [projectManager, setProjectManager] = useState("");
+  const [auditor, setAuditor] = useState("");
+  const [status, setStatus] = useState("");
+  const [isLoading, setLoading] = useState(false);
 
-  const handleAddChecklistItem = () => {
-    setChecklistItems([...checklistItems, checklist]);
-    setChecklist("");
+
+  const [checklist, setChecklist] = useState({
+    policy_displayed: '',
+    policy_up_to_date: '',
+    policy_signed_by_ceo: '',
+    environmental_factors: '',
+    environmental_emergency_procedures: '',
+    environmental_issues: '',
+    environmental_control_measures: '',
+    operatives_briefed: '',
+    sub_contractors_conforming: '',
+    site_cabins_clean: '',
+    adequate_parking_facilities: '',
+    fences_hoardings: '',
+    existing_contamination_onsite: '',
+    transfer_notes_in_place: '',
+    adequate_segregation_measures: '',
+    electrical_power_for_light_and_heat: '',
+    water_usage_minimized: '',
+    plant_shut_down: '',
+    consents_in_place_for_discharge_of_water: '',
+    drains_identified: '',
+    silt_prevented_from_discharging: '',
+    fuel_tanks_within_bund: '',
+    drip_trays_in_place: '',
+    emergency_measures_in_place: '',
+    chemicals_stored_safely: '',
+    plant_in_good_condition: '',
+    plant_and_materials_kept_away: '',
+    wheel_washes_suitably_constructed: '',
+    alternative_arrangements_for_unused_materials: '',
+    materials_acquired_from_sustainable_source: '',
+    arrangements_to_reuse_recycle_existing_site_material: '',
+    dust_suppression_adequate: '',
+    noise_and_vibration_within_reasonable_limits: '',
+    activities_smokeless: '',
+    inessential_burning_onsite: '',
+    deliveries_arranged_to_minimize_disruption_to_neighbors: '',
+    arrangements_to_keep_neighbors_informed: '',
+    site_lights_positioned_away_from_neighbors: '',
+    site_cabins_screened_from_neighbors: '',
+    adequate_protection_in_place_for_existing_planted_areas: '',
+    measures_in_place_to_protect_initial_life: ''
+  });
+
+  const updateChecklistItem = (key, value) => {
+    setChecklist({ ...checklist, [key]: value });
   };
+
+
+  const handleFormData = () => {
+    const formData = new FormData();
+
+    formData.append("checklist", checklist);
+    formData.append("comments", comments);
+    formData.append("correctiveAction", correctiveAction);
+    formData.append("projectManager", projectManager);
+    formData.append("auditor", auditor);
+    formData.append("status", status);
+
+    console.log(formData);
+
+    onsubmit(formData);
+  };
+
+  const onsubmit = async (formData) => {
+    try {
+      setLoading(true);
+      const response = await fetch("https://example.com/api", {
+        method: "POST",
+        body: formData
+      });
+
+      if (response.ok) {
+        alert("Form submitted successfully");
+        onClose();
+      } else {
+        alert("An error occurred. Please try again");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
+
+
 
   return (
     <Modal visible={isVisible} animationType="slide">
@@ -31,7 +120,10 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
             <Text style={{ fontWeight: "bold", marginBottom: 16 }}>
               Enviromental Policy Checklist
             </Text>
-
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              {/* Replace with an icon component if desired */}
+              <Text>X</Text>
+            </TouchableOpacity>
             {/* Environmental Policy Section */}
             <View style={{ marginBottom: 20 }}>
               <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
@@ -41,8 +133,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is the Enviromental Policy displayed on Site?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.policy_displayed}
+                onValueChange={(itemValue) => updateChecklistItem('policy_displayed', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -52,8 +144,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is the Enviromental Policy upto date?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.policy_up_to_date}
+                onValueChange={(itemValue) => updateChecklistItem('policy_up_to_date', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -63,19 +155,19 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is the Enviromental Policy signed by the CEO?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.policy_signed_by_ceo}
+                onValueChange={(itemValue) => updateChecklistItem('policy_signed_by_ceo', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
                 <Picker.Item label="No" value="0" />
               </Picker>
               <Text style={{ marginBottom: 10 }}>
-                Are Environmental factors included in Risk Assessments?{" "}
+                Are Environmental factors included in Risk Assessments?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.environmental_factors}
+                onValueChange={(itemValue) => updateChecklistItem('environmental_factors', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -83,11 +175,11 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
               </Picker>
               <Text style={{ marginBottom: 10 }}>
                 Are Environmental emergency procedures adequately addressed and
-                displayed?{" "}
+                displayed?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.environmental_emergency_procedures}
+                onValueChange={(itemValue) => updateChecklistItem('environmental_emergency_procedures', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -97,8 +189,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are Environmental control measures described in method statements?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.environmental_control_measures}
+                onValueChange={(itemValue) => updateChecklistItem('environmental_control_measures', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -109,8 +201,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 practices?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.operatives_briefed}
+                onValueChange={(itemValue) => updateChecklistItem('operatives_briefed', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -121,8 +213,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Policy?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.sub_contractors_conforming}
+                onValueChange={(itemValue) => updateChecklistItem('sub_contractors_conforming', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -139,8 +231,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are site cabins clean and in good condition?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.site_cabins_clean}
+                onValueChange={(itemValue) => updateChecklistItem('site_cabins_clean', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -150,8 +242,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are there adequate parking facilities off/onsite?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.adequate_parking_facilities}
+                onValueChange={(itemValue) => updateChecklistItem('adequate_parking_facilities', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -161,8 +253,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are fences, hoardings, and gates in good condition?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.fences_hoardings}
+                onValueChange={(itemValue) => updateChecklistItem('fences_hoardings', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -180,8 +272,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 adequately?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.existing_contamination_onsite}
+                onValueChange={(itemValue) => updateChecklistItem('existing_contamination_onsite', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -191,8 +283,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are transfer notes (consignment notes for special waste) in place?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.transfer_notes_in_place}
+                onValueChange={(itemValue) => updateChecklistItem('transfer_notes_in_place', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -202,8 +294,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are adequate segregation measures in place?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.adequate_segregation_measures}
+                onValueChange={(itemValue) => updateChecklistItem('adequate_segregation_measures', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -220,8 +312,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is electrical power for light and heat kept at a minimum period?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.electrical_power_for_light_and_heat}
+                onValueChange={(itemValue) => updateChecklistItem('electrical_power_for_light_and_heat', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -232,8 +324,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 urinals, etc.)
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.water_usage_minimized}
+                onValueChange={(itemValue) => updateChecklistItem('water_usage_minimized', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -243,8 +335,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is plant shut down when not in use?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.plant_shut_down}
+                onValueChange={(itemValue) => updateChecklistItem('plant_shut_down', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -261,8 +353,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are consents in place for the discharge of water?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.consents_in_place_for_discharge_of_water}
+                onValueChange={(itemValue) => updateChecklistItem('consents_in_place_for_discharge_of_water', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -272,8 +364,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are drains identified (surface and sewer)?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.drains_identified}
+                onValueChange={(itemValue) => updateChecklistItem('drains_identified', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -283,8 +375,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is silt being prevented from discharging to watercourses?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.silt_prevented_from_discharging}
+                onValueChange={(itemValue) => updateChecklistItem('silt_prevented_from_discharging', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -294,8 +386,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are fuel tanks, bowsers, and drums within a bund to EA guidelines?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.fuel_tanks_within_bund}
+                onValueChange={(itemValue) => updateChecklistItem('fuel_tanks_within_bund', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -305,8 +397,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are drip trays in place for plant and fuelling points?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.drip_trays_in_place}
+                onValueChange={(itemValue) => updateChecklistItem('drip_trays_in_place', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -316,8 +408,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are emergency measures in place (spill kits)?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.emergency_measures_in_place}
+                onValueChange={(itemValue) => updateChecklistItem('emergency_measures_in_place', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -327,8 +419,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are all chemicals stored safely and marked?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.chemicals_stored_safely}
+                onValueChange={(itemValue) => updateChecklistItem('chemicals_stored_safely', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -338,8 +430,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is plant in good condition and without any leaks?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.plant_in_good_condition}
+                onValueChange={(itemValue) => updateChecklistItem('plant_in_good_condition', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -350,8 +442,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 watercourses?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.plant_and_materials_kept_away}
+                onValueChange={(itemValue) => updateChecklistItem('plant_and_materials_kept_away', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -361,8 +453,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are wheel washes suitably constructed and contained?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.wheel_washes_suitably_constructed}
+                onValueChange={(itemValue) => updateChecklistItem('wheel_washes_suitably_constructed', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -380,8 +472,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 disposal?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.alternative_arrangements_for_unused_materials}
+                onValueChange={(itemValue) => updateChecklistItem('alternative_arrangements_for_unused_materials', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -392,8 +484,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 source?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.materials_acquired_from_sustainable_source}
+                onValueChange={(itemValue) => updateChecklistItem('materials_acquired_from_sustainable_source', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -403,8 +495,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are there arrangements to reuse/recycle existing site material?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.arrangements_to_reuse_recycle_existing_site_material}
+                onValueChange={(itemValue) => updateChecklistItem('arrangements_to_reuse_recycle_existing_site_material', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -422,8 +514,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is dust suppression adequate?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.dust_suppression_adequate}
+                onValueChange={(itemValue) => updateChecklistItem('dust_suppression_adequate', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -433,8 +525,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are noise and vibration within reasonable limits?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.noise_and_vibration_within_reasonable_limits}
+                onValueChange={(itemValue) => updateChecklistItem('noise_and_vibration_within_reasonable_limits', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -442,8 +534,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
               </Picker>
               <Text style={{ marginBottom: 10 }}>Are activities smokeless?</Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.activities_smokeless}
+                onValueChange={(itemValue) => updateChecklistItem('activities_smokeless', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -453,8 +545,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is there any inessential burning on-site?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.inessential_burning_onsite}
+                onValueChange={(itemValue) => updateChecklistItem('inessential_burning_onsite', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -464,8 +556,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are deliveries arranged to minimize disruption to neighbors?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.deliveries_arranged_to_minimize_disruption_to_neighbors}
+                onValueChange={(itemValue) => updateChecklistItem('deliveries_arranged_to_minimize_disruption_to_neighbors', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -476,8 +568,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 procedures?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.arrangements_to_keep_neighbors_informed}
+                onValueChange={(itemValue) => updateChecklistItem('arrangements_to_keep_neighbors_informed', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -487,8 +579,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are site lights positioned away from neighbors?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.site_lights_positioned_away_from_neighbors}
+                onValueChange={(itemValue) => updateChecklistItem('site_lights_positioned_away_from_neighbors', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -498,8 +590,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are site cabins screened from neighbors as appropriate?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.site_cabins_screened_from_neighbors}
+                onValueChange={(itemValue) => updateChecklistItem('site_cabins_screened_from_neighbors', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -516,8 +608,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Is adequate protection in place for existing planted areas?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.adequate_protection_in_place_for_existing_planted_areas}
+                onValueChange={(itemValue) => updateChecklistItem('adequate_protection_in_place_for_existing_planted_areas', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -527,8 +619,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 Are measures in place to protect initial life adequate?
               </Text>
               <Picker
-                selectedValue={checklist}
-                onValueChange={(itemValue) => setChecklist(itemValue)}
+                selectedValue={checklist.measures_in_place_to_protect_initial_life}
+                onValueChange={(itemValue) => updateChecklistItem('measures_in_place_to_protect_initial_life', itemValue)}
               >
                 <Picker.Item label="Select" value="" />
                 <Picker.Item label="Yes" value="1" />
@@ -551,6 +643,7 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 }}
                 multiline
                 numberOfLines={4}
+                onChangeText={setComments}
               />
               <Text style={{ marginBottom: 10 }}>Corrective Action</Text>
               <TextInput
@@ -562,6 +655,7 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 }}
                 multiline
                 numberOfLines={4}
+                onChangeText={setCorrectiveAction}
               />
               <Text style={{ marginBottom: 10 }}>Project/Site Manager:</Text>
               <TextInput
@@ -571,6 +665,7 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                   padding: 10,
                   marginBottom: 10
                 }}
+                onChangeText={setProjectManager}
               />
               <Text style={{ marginBottom: 10 }}>Auditor:</Text>
               <TextInput
@@ -580,9 +675,41 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                   padding: 10,
                   marginBottom: 10
                 }}
+                onChangeText={setAuditor}
               />
+              <Text style={{ marginBottom: 10 }}>Status:</Text>
+              <Picker
+                selectedValue={status}
+                onValueChange={(itemValue) => setStatus(itemValue)}
+              >
+                <Picker.Item label="Select Status" value="" />
+                <Picker.Item label="Approved" value="approved" />
+                <Picker.Item label="Rejected" value="rejected" />
+                <Picker.Item label="Pending" value="pending" />
+              </Picker>
             </View>
-            <Button title="Submit" onPress={onClose} />
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeModal} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.submit} onPress={handleFormData}>
+                <Text>Add Concern</Text>
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.4)"
+                  }
+                ]}
+              >
+                <ActivityIndicator animating size="large" color="#fff" />
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
@@ -597,6 +724,7 @@ const AddFreeFormModal = ({ isVisible, onClose }) => {
   const [status, setStatus] = useState("");
   const [projectManager, setProjectManager] = useState("");
   const [auditor, setAuditor] = useState("");
+  const [isLoading, setLoading] = useState(false);
 
   return (
     <Modal visible={isVisible} animationType="slide">
@@ -684,8 +812,28 @@ const AddFreeFormModal = ({ isVisible, onClose }) => {
               }}
               value={auditor}
               onChangeText={setAuditor}
-            />
-            <Button title="Submit" onPress={onClose} />
+            /><View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeModal} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.submit} onPress={() => {}}>
+                <Text>Add Concern</Text>
+              </TouchableOpacity>
+            </View>
+            {isLoading ? (
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.4)"
+                  }
+                ]}
+              >
+                <ActivityIndicator animating size="large" color="#fff" />
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingWrapper>
@@ -807,6 +955,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
+  }
+  ,
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20
+  },
+  closeModal: {
+    padding: 10,
+    backgroundColor: "red",
+    borderRadius: 5
+  },
+  submit: {
+    padding: 10,
+    backgroundColor: "blue",
+    borderRadius: 5
   }
 });
 

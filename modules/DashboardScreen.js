@@ -11,6 +11,8 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+
 
 const DashboardScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,6 +40,7 @@ const DashboardScreen = () => {
       // setDashboardStats(response.data);
 
       if (response.status === 200) {
+        console.log(response.data);
         setDashboardStats(response.data);
       } else {
         console.log("Error fetching dashboard stats");
@@ -72,6 +75,9 @@ const DashboardScreen = () => {
   };
 
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
+
+  const navigation = useNavigation();
+
 
   return (
     <View style={{ flex: 1 }}>
@@ -151,9 +157,7 @@ const DashboardScreen = () => {
                 <Text style={styles.cardFooter}></Text>
               </View>
               <View style={styles.card}>
-                <Text style={styles.cardHeader}>
-                  Immediate Corrective Actions
-                </Text>
+                <Text style={styles.cardHeader}>Immediate Corrective Actions</Text>
                 <View style={styles.cardBody}>
                   <Text style={styles.cardContent}>{dashboardStats?.icas}</Text>
                 </View>
@@ -180,7 +184,7 @@ const DashboardScreen = () => {
               <View style={styles.card}>
                 <Text style={styles.cardHeader}>Permits Applicable</Text>
                 <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}></Text>
+                  <Text style={styles.cardContent}>{dashboardStats?.permits}</Text>
                 </View>
                 <Text style={styles.cardFooter}></Text>
               </View>

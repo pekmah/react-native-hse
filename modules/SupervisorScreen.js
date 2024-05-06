@@ -20,59 +20,63 @@ import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 
 
-const SupervisorDetailModal = () => {
+const SupervisorDetailModal = ({ supervisor, isVisible, onClose }) => {
+  if (!isVisible) {
+    return null;
+  }
+
+
   return (
     <Modal
-      visible={false} // Set the visibility based on some state
       animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
     >
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: 10
-          }}
-        >
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-            Supervisor's Detail
-          </Text>
-          <TouchableOpacity
-            onPress={() => {
-              /* Close the modal */
-            }}
-          >
-            <Text>Close</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ paddingHorizontal: 10 }}>
-          <View style={{ marginBottom: 10 }}>
-            <Text>Name</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 5,
-                padding: 5
-              }}
-              editable={false}
-            />
-          </View>
-          <View>
-            <Text>Date</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 5,
-                padding: 5
-              }}
-              editable={false}
-            />
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View Supervisor</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}> Name</Text>
+              <TextInput
+                style={styles.textInput}
+                value={supervisor.name}
+                editable={false}
+              />
+              <Text style={styles.label}>Designation</Text>
+              <TextInput
+                style={styles.textInput}
+                value={supervisor.designation}
+                editable={false}
+              />
+              <Text style={styles.label}>Date Added</Text>
+              <TextInput
+                style={styles.textInput}
+                value={supervisor.date}
+                editable={false}
+              />
+              <Text style={styles.label}>Added By</Text>
+              <TextInput
+                style={styles.textInput}
+                value={supervisor.user.name}
+                editable={false}
+              />
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </Modal>
   );
 };
@@ -124,7 +128,7 @@ const AddSupervisorModal = ({ isVisible, onClose }) => {
         setIsLoading(false);
         onClose();
 
-        retrieveSupervisors();
+        // retrieveSupervisors();
       }
     }
     catch (error) {
@@ -234,7 +238,7 @@ const SupervisorScreen = () => {
       });
 
       if (response.status === 200) {
-        setSupervisors(response.data);
+        setSupervisors(response.data.data);
       }
     } catch (error) {
       console.log(error);
@@ -373,7 +377,7 @@ const SupervisorScreen = () => {
                   <Text style={[styles.heading, styles.column]}>Action</Text>
                 </View>
                 {/* Render Supervisors here */}
-                {renderSupervisors}
+                {renderSupervisors()}
                 {/* Pagination controls */}
                 <View
                   style={{ flexDirection: "row", justifyContent: "center" }}
