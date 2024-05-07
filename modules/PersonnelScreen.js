@@ -184,7 +184,7 @@ const AddPersonnelModal = ({ visible, onClose , fetchPersonnelData}) => {
                 <Text>Close</Text>
               </TouchableOpacity>
               <TouchableOpacity style={{ marginLeft: 10, padding: 5, borderRadius: 5, backgroundColor: "#007bff" }} onPress={handleAddPersonnel}>
-                <Text>Add Permit</Text>
+                <Text>Add Personnel</Text>
               </TouchableOpacity>
             </View>
             {loading ? (

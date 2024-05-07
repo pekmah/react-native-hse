@@ -360,7 +360,7 @@ const SupervisorScreen = () => {
                 <Preloader />
               </View>
             )}
-            {/* Render Permits if not loading */}
+            {/* Render the content if not loading */}
             {!isLoading && (
               <>
                 <View

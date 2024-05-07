@@ -16,6 +16,91 @@ import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Preloader from "../components/Preloader";
 
+const ViewConcernModal = ({ concern, onClose, visible }) => {
+  if (!visible || !concern) {
+    return null;
+  }
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <ScrollView style={styles.modalScrollView}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>View Concern</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                {/* Replace with an icon component if desired */}
+                <Text>X</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Added By:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.user.name}
+                editable={false}
+              />
+              <Text style={styles.label}>Concern Type:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.type}
+                editable={false}
+              />
+              <Text style={styles.label}>Comment:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.comments}
+                editable={false}
+                multiline={true}
+              />
+              <Text style={styles.label}>Corrective Actions:</Text>
+              {Object.keys(concern.corrective_actions || {}).map((key, index) => (
+                <TextInput
+                  key={index}
+                  style={styles.textInput}
+                  value={concern.corrective_actions[key]}
+                  editable={false}
+                  multiline={true}
+                />
+              ))}
+              <Text style={styles.label}>Status:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.status}
+                editable={false}
+              />
+              <Text style={styles.label}>Auditor:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.auditor}
+                editable={false}
+              />
+              <Text style={styles.label}>Project Manager:</Text>
+              <TextInput
+                style={styles.textInput}
+                value={concern.project_manager}
+                editable={false}
+              />
+            </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </Modal>
+  );
+};
+
+
+
 
 const EnvironmentalConcernsScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -24,6 +109,9 @@ const EnvironmentalConcernsScreen = () => {
   const [itemsPerPage] = useState(8);
   const [concerns, setConcerns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedConcern, setSelectedConcern] = useState(null);
+  const [isViewConcernModalOpen, setIsViewConcernModalOpen] = useState(false);
+
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -50,7 +138,7 @@ const EnvironmentalConcernsScreen = () => {
       const token = await AsyncStorage.getItem("token");
 
       // Fetch tasks for the current page
-      const response = await ApiManager.get("/icas", {
+      const response = await ApiManager.get("/environmental-policy", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -59,7 +147,7 @@ const EnvironmentalConcernsScreen = () => {
       // Handle the response
       if (response.status === 200) {
         // Set the open SORs
-        setConcerns(response.data.data);
+        setConcerns(response.data);
         // Set loading to false
         setLoading(false);
       } else {
@@ -88,24 +176,33 @@ const EnvironmentalConcernsScreen = () => {
     setCurrentPage(currentPage - 1);
   };
 
+  //handle view concern
+  const handleViewConcern = (concern) => {
+    setSelectedConcern(concern);
+    setIsViewConcernModalOpen(true);
+  };
+
   const renderConcerns = () => {
     return concerns && concerns.length > 0 ? (
       concerns
-      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-      .map((concern) => (
-        <View
-        key={concern.id}
-        style={{
-          flexDirection: "row", 
-          borderBottomWidth: 1,
-          borderBottomColor: "#ccc",
-          paddingVertical: 8
-        }}
-      >
-        <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
-          {concern.id}
-        </Text>
-        <TouchableOpacity
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map((concern) => (
+          <View
+            key={concern.id}
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ccc",
+              paddingVertical: 8
+            }}
+          >
+            <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+              {concern.type}
+            </Text>
+            <Text style={[styles.column, { flex: 2, marginRight: 16 }]}>
+              {concern.user.name}
+            </Text>
+            <TouchableOpacity
               style={{
                 backgroundColor: "#007bff",
                 padding: 4,
@@ -115,7 +212,7 @@ const EnvironmentalConcernsScreen = () => {
                 alignItems: "center",
                 height: 30
               }}
-              onPress={() => {}}
+              onPress={() => handleViewConcern(concern)}
             >
               <Text style={{ color: "#fff" }}>View</Text>
             </TouchableOpacity>
@@ -149,12 +246,12 @@ const EnvironmentalConcernsScreen = () => {
           <Text style={styles.title}>Enviromental Concerns</Text>
           <View style={{ flex: 1, padding: 10 }}>
             {/* Render the preloader if loading */}
-             {loading && (
+            {loading && (
               <View style={styles.preloaderContainer}>
                 <Preloader />
               </View>
             )}
-              {!loading && (
+            {!loading && (
               <>
                 <View
                   style={{
@@ -163,7 +260,8 @@ const EnvironmentalConcernsScreen = () => {
                     borderBottomColor: "#ccc"
                   }}
                 >
-                  <Text style={[styles.heading, styles.column]}>Concern ID</Text>
+                  <Text style={[styles.heading, styles.column]}>Concern Type</Text>
+                  <Text style={[styles.heading, styles.column]}>Added By</Text>
                   <Text style={[styles.heading, styles.column]}>Action</Text>
                 </View>
                 {/* Render concerns here */}
@@ -190,6 +288,12 @@ const EnvironmentalConcernsScreen = () => {
                     <Text>Next</Text>
                   </TouchableOpacity>
                 </View>
+                {/* View Concern Modal */}
+                <ViewConcernModal
+                  visible={isViewConcernModalOpen}
+                  concern={selectedConcern}
+                  onClose={() => setIsViewConcernModalOpen(false)}
+                />
               </>
             )}
           </View>
@@ -269,6 +373,69 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center"
+  },
+  crollView: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    width: "100%",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "100%"
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: "#f41313"
+  },
+  modalBody: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  textInput: {
+    padding: 10,
+    backgroundColor: "#eee",
+    color: "#000",
+    borderRadius: 5,
+    marginBottom: 15
+  },
+  mediaContainer: {
+    marginBottom: 15
+  },
+  mediaLabel: {
+    fontSize: 16,
+    marginBottom: 5
+  },
+  mediaImage: {
+    //calculate the width of the image based on the screen width
+    width: "100%",
+    height: 200,
+    marginBottom: 5
+  },
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "flex-end"
   }
 });
 

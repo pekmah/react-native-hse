@@ -177,7 +177,7 @@ const DashboardScreen = () => {
               <View style={styles.card}>
                 <Text style={styles.cardHeader}>Environmental Concerns</Text>
                 <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}></Text>
+                  <Text style={styles.cardContent}>{dashboardStats?.environmental_concerns}</Text>
                 </View>
                 <Text style={styles.cardFooter}></Text>
               </View>

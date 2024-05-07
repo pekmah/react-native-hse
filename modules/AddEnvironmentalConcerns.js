@@ -1,29 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
   TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  DrawerLayoutAndroid,
+  StyleSheet,
   Button,
-  Dimensions,
-  StyleSheet
+  ActivityIndicator,
+  Image,
+  Alert
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
+import ApiManager from "../api/ApiManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import { FlatList } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons";
+import MenuScreen from "../components/MenuScreen";
+import config from "../config/config";
 import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 
 
 const AddCheckListModal = ({ isVisible, onClose }) => {
   const [comments, setComments] = useState("");
-  const [correctiveAction, setCorrectiveAction] = useState([]);
+  const [correctiveAction, setCorrectiveAction] = useState({});
   const [projectManager, setProjectManager] = useState("");
   const [auditor, setAuditor] = useState("");
   const [status, setStatus] = useState("");
   const [isLoading, setLoading] = useState(false);
-
-
   const [checklist, setChecklist] = useState({
     policy_displayed: '',
     policy_up_to_date: '',
@@ -72,38 +80,69 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
     setChecklist({ ...checklist, [key]: value });
   };
 
+  //Function to handle adding an action item
+  const addAction = () => {
+    const newActionNumber = Object.keys(correctiveAction).length + 1;
+    setCorrectiveAction({
+      ...correctiveAction,
+      [newActionNumber]: ""
+    });
+  };
+
+  //Function to handle removing an action item
+  const removeAction = (actionNumber) => {
+    const newCorrectiveAction = { ...correctiveAction };
+    delete newCorrectiveAction[actionNumber];
+    setCorrectiveAction(newCorrectiveAction);
+  };
+
+  //Function to handle updating an action item
+  const updateAction = (actionNumber, value) => {
+    setCorrectiveAction({
+      ...correctiveAction,
+      [actionNumber]: value
+    });
+  };
+
 
   const handleFormData = () => {
     const formData = new FormData();
 
-    formData.append("checklist", checklist);
+    formData.append("checklist", JSON.stringify(checklist));
     formData.append("comments", comments);
-    formData.append("correctiveAction", correctiveAction);
-    formData.append("projectManager", projectManager);
+    formData.append("corrective_action", JSON.stringify(correctiveAction));
+    formData.append("project_manager", projectManager);
     formData.append("auditor", auditor);
     formData.append("status", status);
 
-    console.log(formData);
 
     onsubmit(formData);
+
   };
 
   const onsubmit = async (formData) => {
     try {
       setLoading(true);
-      const response = await fetch("https://example.com/api", {
+      const token = await AsyncStorage.getItem("token");
+
+      const response = await fetch(`${config.apiBaseUrl}/add-environmental-checklist`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
         body: formData
       });
 
-      if (response.ok) {
-        alert("Form submitted successfully");
+      if (response.status === 200) {
+        alert("Checklist added successfully");
         onClose();
       } else {
         alert("An error occurred. Please try again");
       }
     } catch (error) {
       console.error(error);
+      console.log(error.response)
     }
     finally {
       setLoading(false);
@@ -646,17 +685,51 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 onChangeText={setComments}
               />
               <Text style={{ marginBottom: 10 }}>Corrective Action</Text>
-              <TextInput
+              {Object.entries(correctiveAction).map(([actionNumber, actionValue]) => (
+                <View
+                  key={actionNumber}
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 10
+                  }}
+                >
+                  <TextInput
+                    style={{
+                      flex: 1,
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 4,
+                      padding: 8
+                    }}
+                    placeholder="Enter Action"
+                    value={actionValue}
+                    onChangeText={(text) => updateAction(actionNumber, text)}
+                  />
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: "red",
+                      padding: 8,
+                      borderRadius: 4
+                    }}
+                    onPress={() => removeAction(actionNumber)}
+                  >
+                    <Ionicons name="trash" size={24} color="red" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity
                 style={{
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  padding: 10,
+                  backgroundColor: "green",
+                  padding: 8,
+                  borderRadius: 4,
                   marginBottom: 10
                 }}
-                multiline
-                numberOfLines={4}
-                onChangeText={setCorrectiveAction}
-              />
+                onPress={addAction}
+              >
+                <Ionicons name="add" size={24} color="white" />
+              </TouchableOpacity>
               <Text style={{ marginBottom: 10 }}>Project/Site Manager:</Text>
               <TextInput
                 style={{
@@ -683,9 +756,8 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
                 onValueChange={(itemValue) => setStatus(itemValue)}
               >
                 <Picker.Item label="Select Status" value="" />
-                <Picker.Item label="Approved" value="approved" />
-                <Picker.Item label="Rejected" value="rejected" />
-                <Picker.Item label="Pending" value="pending" />
+                <Picker.Item label="Open" value="open" />
+                <Picker.Item label="Closed" value="closed" />
               </Picker>
             </View>
             <View style={styles.modalFooter}>
@@ -720,14 +792,83 @@ const AddCheckListModal = ({ isVisible, onClose }) => {
 const AddFreeFormModal = ({ isVisible, onClose }) => {
   const [type, setType] = useState("");
   const [comment, setComment] = useState("");
-  const [correctiveAction, setCorrectiveAction] = useState("");
+  const [correctiveAction, setCorrectiveAction] = useState({});
   const [status, setStatus] = useState("");
   const [projectManager, setProjectManager] = useState("");
   const [auditor, setAuditor] = useState("");
   const [isLoading, setLoading] = useState(false);
 
+  //Function to handle adding an action item
+  const addAction = () => {
+    const newActionNumber = Object.keys(correctiveAction).length + 1;
+    setCorrectiveAction({
+      ...correctiveAction,
+      [newActionNumber]: ""
+    });
+  };
+
+  //Function to handle removing an action item
+  const removeAction = (actionNumber) => {
+    const newCorrectiveAction = { ...correctiveAction };
+    delete newCorrectiveAction[actionNumber];
+    setCorrectiveAction(newCorrectiveAction);
+  };
+
+  //Function to handle updating an action item
+  const updateAction = (actionNumber, value) => {
+    setCorrectiveAction({
+      ...correctiveAction,
+      [actionNumber]: value
+    });
+  };
+
+
+  const handleFormData = () => {
+    const formData = new FormData();
+
+    formData.append("type", type);
+    formData.append("comment", comment);
+    formData.append("corrective_action", JSON.stringify(correctiveAction));
+    formData.append("project_manager", projectManager);
+    formData.append("auditor", auditor);
+    formData.append("status", status);
+
+    onsubmit(formData);
+  }
+
+  const onsubmit = async (formData) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+
+      const response = await fetch(`${config.apiBaseUrl}/add-environmental-form`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        },
+        body: formData
+      });
+
+      if (response.status === 200) {
+        alert("Free Form added successfully");
+        onClose();
+      } else {
+        alert("An error occurred. Please try again");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
+
+
   return (
-    <Modal visible={isVisible} animationType="slide">
+    <Modal
+      visible={isVisible}
+      animationType="slide">
       <KeyboardAvoidingWrapper>
         <ScrollView style={{ paddingHorizontal: 10 }}>
           <View style={{ flex: 1, paddingVertical: 24 }}>
@@ -770,18 +911,52 @@ const AddFreeFormModal = ({ isVisible, onClose }) => {
               onChangeText={setComment}
             />
             <Text style={{ marginBottom: 10 }}>Corrective Action</Text>
-            <TextInput
+            {Object.entries(correctiveAction).map(([actionNumber, actionValue]) => (
+              <View
+                key={actionNumber}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10
+                }}
+              >
+                <TextInput
+                  style={{
+                    flex: 1,
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    borderRadius: 4,
+
+                    padding: 8
+                  }}
+                  placeholder="Enter Action"
+                  value={actionValue}
+                  onChangeText={(text) => updateAction(actionNumber, text)}
+                />
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "red",
+                    padding: 8,
+                    borderRadius: 4
+                  }}
+                  onPress={() => removeAction(actionNumber)}
+                >
+                  <Ionicons name="trash" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity
               style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                padding: 10,
+                backgroundColor: "green",
+                padding: 8,
+                borderRadius: 4,
                 marginBottom: 10
               }}
-              multiline
-              numberOfLines={4}
-              value={correctiveAction}
-              onChangeText={setCorrectiveAction}
-            />
+              onPress={addAction}
+            >
+              <Ionicons name="add" size={24} color="white" />
+            </TouchableOpacity>
             <Text style={{ marginBottom: 10 }}>Status</Text>
             <Picker
               selectedValue={status}
@@ -816,7 +991,7 @@ const AddFreeFormModal = ({ isVisible, onClose }) => {
               <TouchableOpacity style={styles.closeModal} onPress={onClose}>
                 <Text>Close</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.submit} onPress={() => {}}>
+              <TouchableOpacity style={styles.submit} onPress={handleFormData}>
                 <Text>Add Concern</Text>
               </TouchableOpacity>
             </View>
