@@ -21,7 +21,7 @@
       "package": "com.HSE",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/img/ic_launcher/res/mipmap-anydpi-v26/ic_launcher.xml",
+        "foregroundImage": "./assets/ic_launcher.png",
         "backgroundColor": "#ffffff"
       }
     },
