@@ -74,11 +74,10 @@ const LandingPage = () => {
             const token = await AsyncStorage.getItem("token");
             if (token) {
                 setIsAuthenticated(true);
-            } else {
-                setIsAuthenticated(false);
             }
         } catch (error) {
             console.error(error);
+            setIsAuthenticated(false);
         }
     };
 

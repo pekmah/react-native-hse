@@ -12,12 +12,16 @@ import MenuScreen from "../components/MenuScreen";
 import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import Preloader from "../components/Preloader";
 
 
 const DashboardScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [dashboardStats, setDashboardStats] = useState(null);
   const drawerRef = useRef(null);
+  const navigation = useNavigation();
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Fetch dashboard stats when component mounts
@@ -26,6 +30,7 @@ const DashboardScreen = () => {
 
   const fetchDashboardStats = async () => {
     try {
+      setLoading(true);
       // Fetch api token
       const token = await AsyncStorage.getItem("token");
       console.log(token);
@@ -52,7 +57,11 @@ const DashboardScreen = () => {
         await AsyncStorage.removeItem("token");
         await AsyncStorage.removeItem("user");
         //redirect to dashboard page
-        navigation.navigate("Login");      }
+        navigation.navigate("Login");
+      }
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -76,7 +85,6 @@ const DashboardScreen = () => {
 
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
 
-  const navigation = useNavigation();
 
 
   return (
@@ -93,103 +101,109 @@ const DashboardScreen = () => {
           onTouchStart={handleOutsideTouch} // Handle touch outside drawer
           onScrollBeginDrag={handleOutsideTouch} // Handle scroll outside drawer
         >
-          {/* <TouchableOpacity style={styles.menu} onPress={toggleDrawer}>
-            <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity> */}
           {/* Content */}
-          <View style={styles.content}>
-            {/* First Row */}
-            <View style={styles.row}>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Site Name</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>Test</Text>
+          {/* Render the preloader if loading */}
+          {loading && (
+            <View style={styles.preloaderContainer}>
+              <Preloader />
+            </View>
+          )}
+          {/* Render the dashboard content */}
+          {!loading && (
+            <View style={styles.content}>
+              {/* First Row */}
+              <View style={styles.row}>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Site Name</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>Test</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
                 </View>
-                <Text style={styles.cardFooter}></Text>
+                {/* Add other cards here */}
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Supervisor’s Detail</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.supervisor}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Fire Marshal’s Detail</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.fire_marshal}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>First Aider’s Detail</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.first_aider}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
               </View>
-              {/* Add other cards here */}
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Supervisor’s Detail</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.supervisor}</Text>
+              {/* Second Row */}
+              <View style={styles.row}>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>
+                    Live Number Of People On Site
+                  </Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.personells}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
                 </View>
-                <Text style={styles.cardFooter}></Text>
+                {/* Add other cards here */}
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Tasks Of The Day</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.tasks}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Incidents Recorded</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.incidents}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Immediate Corrective Actions</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.icas}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
               </View>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Fire Marshal’s Detail</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.fire_marshal}</Text>
+              {/* Third Row */}
+              <View style={styles.row}>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Safety Observation Record</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.sors}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
                 </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>First Aider’s Detail</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.first_aider}</Text>
+                {/* Add other cards here */}
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Environmental Concerns</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.environmental_concerns}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
                 </View>
-                <Text style={styles.cardFooter}></Text>
+                <View style={styles.card}>
+                  <Text style={styles.cardHeader}>Permits Applicable</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardContent}>{dashboardStats?.permits}</Text>
+                  </View>
+                  <Text style={styles.cardFooter}></Text>
+                </View>
               </View>
             </View>
-            {/* Second Row */}
-            <View style={styles.row}>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>
-                  Live Number Of People On Site
-                </Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.personells}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              {/* Add other cards here */}
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Tasks Of The Day</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.tasks}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Incidents Recorded</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.incidents}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Immediate Corrective Actions</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.icas}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-            </View>
-            {/* Third Row */}
-            <View style={styles.row}>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Safety Observation Record</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.sors}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              {/* Add other cards here */}
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Environmental Concerns</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.environmental_concerns}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardHeader}>Permits Applicable</Text>
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardContent}>{dashboardStats?.permits}</Text>
-                </View>
-                <Text style={styles.cardFooter}></Text>
-              </View>
-            </View>
-          </View>
+          )}
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
@@ -262,6 +276,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     textAlign: "center"
+  },
+  preloaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });
 
