@@ -5,7 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  DrawerLayoutAndroid
+  DrawerLayoutAndroid,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MenuScreen from "../components/MenuScreen";
@@ -13,7 +13,6 @@ import ApiManager from "../api/ApiManager";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import Preloader from "../components/Preloader";
-
 
 const DashboardScreen = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,8 +37,8 @@ const DashboardScreen = () => {
       // Fetch dashboard stats
       const response = await ApiManager.get("/dashboard-stats", {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       // setDashboardStats(response.data);
@@ -59,8 +58,7 @@ const DashboardScreen = () => {
         //redirect to dashboard page
         navigation.navigate("Login");
       }
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   };
@@ -84,8 +82,6 @@ const DashboardScreen = () => {
   };
 
   const navigationView = () => <MenuScreen closeDrawer={closeDrawer} />;
-
-
 
   return (
     <View style={{ flex: 1 }}>
@@ -124,21 +120,27 @@ const DashboardScreen = () => {
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Supervisor’s Detail</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.supervisor}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.supervisor}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Fire Marshal’s Detail</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.fire_marshal}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.fire_marshal}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>First Aider’s Detail</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.first_aider}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.first_aider}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
@@ -150,7 +152,9 @@ const DashboardScreen = () => {
                     Live Number Of People On Site
                   </Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.personells}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.personells}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
@@ -158,21 +162,29 @@ const DashboardScreen = () => {
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Tasks Of The Day</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.tasks}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.tasks}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Incidents Recorded</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.incidents}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.incidents}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
                 <View style={styles.card}>
-                  <Text style={styles.cardHeader}>Immediate Corrective Actions</Text>
+                  <Text style={styles.cardHeader}>
+                    Immediate Corrective Actions
+                  </Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.icas}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.icas}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
@@ -180,9 +192,13 @@ const DashboardScreen = () => {
               {/* Third Row */}
               <View style={styles.row}>
                 <View style={styles.card}>
-                  <Text style={styles.cardHeader}>Safety Observation Record</Text>
+                  <Text style={styles.cardHeader}>
+                    Safety Observation Record
+                  </Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.sors}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.sors}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
@@ -190,14 +206,18 @@ const DashboardScreen = () => {
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Environmental Concerns</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.environmental_concerns}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.environmental_concerns}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
                 <View style={styles.card}>
                   <Text style={styles.cardHeader}>Permits Applicable</Text>
                   <View style={styles.cardBody}>
-                    <Text style={styles.cardContent}>{dashboardStats?.permits}</Text>
+                    <Text style={styles.cardContent}>
+                      {dashboardStats?.permits}
+                    </Text>
                   </View>
                   <Text style={styles.cardFooter}></Text>
                 </View>
@@ -218,25 +238,25 @@ const DashboardScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   menu: {
     padding: 10,
     backgroundColor: "#fff",
     position: "absolute",
     zIndex: 1,
-    marginBottom: 10
+    marginBottom: 10,
   },
   content: {
     paddingHorizontal: 10,
     paddingTop: 10,
-    marginTop: 40
+    marginTop: 40,
   },
   row: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: 20
+    marginBottom: 20,
   },
   card: {
     width: "48%",
@@ -248,40 +268,40 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 5,
-    marginBottom: 15
+    marginBottom: 15,
   },
   cardHeader: {
     fontSize: 13,
     fontWeight: "bold",
     marginBottom: 5,
-    textAlign: "center"
+    textAlign: "center",
   },
   cardBody: {
-    marginBottom: 10
+    marginBottom: 10,
   },
   cardContent: {
     fontSize: 14,
-    textAlign: "center"
+    textAlign: "center",
   },
   cardFooter: {
     fontSize: 14,
-    color: "#666"
+    color: "#666",
   },
   footer: {
     backgroundColor: "#fff",
     padding: 10,
     marginTop: 10,
-    alignItems: "center"
+    alignItems: "center",
   },
   footerText: {
     color: "#666",
-    textAlign: "center"
+    textAlign: "center",
   },
   preloaderContainer: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center"
-  }
+    alignItems: "center",
+  },
 });
 
 export default DashboardScreen;
